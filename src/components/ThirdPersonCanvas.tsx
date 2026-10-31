@@ -11,9 +11,7 @@ import { soundEngine } from '../audio/soundEngine';
 import { 
   Compass, 
   MapPin, 
-  Sparkles, 
   Heart, 
-  Eye, 
   Maximize2, 
   X,
   ArrowUp,
@@ -67,8 +65,9 @@ export const ThirdPersonCanvas: React.FC<ThirdPersonCanvasProps> = ({
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   
-  // Brightness Control: 1 = Noite Enluarada Clara (padrão com alta visibilidade), 2 = Alvorada Dourada, 0 = Noite Clássica
-  const [brightnessPreset, setBrightnessPreset] = useState<'luminous' | 'dawn' | 'dramatic'>('luminous');
+  // Brightness Control: 'daylight' (padrão absoluto: 100% claro, sem nenhuma opacidade escura), 'torchlit' (noite clara e dourada)
+  const [lightingMode, setLightingMode] = useState<'daylight' | 'torchlit'>('daylight');
+  const [brightnessLevel, setBrightnessLevel] = useState<number>(100); // 50% to 150%
 
   // Player State
   const [player, setPlayer] = useState<{
@@ -83,8 +82,8 @@ export const ThirdPersonCanvas: React.FC<ThirdPersonCanvasProps> = ({
   }>({
     x: worldData.spawnPoint.x,
     y: worldData.spawnPoint.y,
-    radius: 18,
-    speed: 3.4,
+    radius: 22,
+    speed: 3.6,
     facing: 'up',
     isMoving: false,
     walkCycle: 0,
@@ -101,7 +100,7 @@ export const ThirdPersonCanvas: React.FC<ThirdPersonCanvasProps> = ({
   const [showFullMap, setShowFullMap] = useState<boolean>(false);
   const [flameFlicker, setFlameFlicker] = useState<number>(1.0);
 
-  // Rising Embers Particles for Brazier
+  // Rising Embers Particles
   const embersRef = useRef<EmberParticle[]>([]);
 
   // Input states
@@ -210,18 +209,17 @@ export const ThirdPersonCanvas: React.FC<ThirdPersonCanvasProps> = ({
       const dt = Math.min((currentTime - lastTime) / 1000, 0.1);
       lastTime = currentTime;
 
-      // 1. Update flame flicker & rising embers
-      setFlameFlicker(0.94 + Math.sin(currentTime * 0.009) * 0.06 + Math.random() * 0.03);
+      setFlameFlicker(0.95 + Math.sin(currentTime * 0.01) * 0.05 + Math.random() * 0.03);
 
       const brazier = worldData.props.find((p) => p.id === 'brazier_central');
-      if (brazier && Math.random() < 0.35) {
+      if (brazier && Math.random() < 0.4) {
         embersRef.current.push({
-          x: brazier.x + brazier.width / 2 + (Math.random() * 24 - 12),
+          x: brazier.x + brazier.width / 2 + (Math.random() * 26 - 13),
           y: brazier.y + brazier.height / 2 + (Math.random() * 12 - 6),
-          vx: (Math.random() - 0.5) * 18,
-          vy: -30 - Math.random() * 40,
+          vx: (Math.random() - 0.5) * 20,
+          vy: -35 - Math.random() * 45,
           alpha: 1.0,
-          size: 2 + Math.random() * 2.5
+          size: 2.5 + Math.random() * 3
         });
       }
 
@@ -232,7 +230,7 @@ export const ThirdPersonCanvas: React.FC<ThirdPersonCanvasProps> = ({
       });
       embersRef.current = embersRef.current.filter((e) => e.alpha > 0);
 
-      // 2. Compute Player Movement
+      // Player Movement
       let moveX = 0;
       let moveY = 0;
 
@@ -249,7 +247,7 @@ export const ThirdPersonCanvas: React.FC<ThirdPersonCanvasProps> = ({
       }
 
       const isSneaking = !!(keysPressed.current['ShiftLeft'] || keysPressed.current['ShiftRight']);
-      const currentSpeed = isSneaking ? 1.8 : 3.4;
+      const currentSpeed = isSneaking ? 2.0 : 3.6;
 
       let isMoving = false;
       let newFacing = player.facing;
@@ -266,7 +264,6 @@ export const ThirdPersonCanvas: React.FC<ThirdPersonCanvasProps> = ({
           newFacing = moveY > 0 ? 'down' : 'up';
         }
 
-        // Sliding collision resolution
         const nextX = player.x + normX;
         const nextY = player.y + normY;
 
@@ -284,7 +281,7 @@ export const ThirdPersonCanvas: React.FC<ThirdPersonCanvasProps> = ({
       player.facing = newFacing;
       player.isSneaking = isSneaking;
 
-      // 3. Update NPC Patrols
+      // Update NPC Patrols
       npcs.forEach((npc) => {
         if (npc.isPatrolling && npc.patrolPoints && npc.patrolPoints.length > 1) {
           const target = npc.patrolPoints[npc.currentPatrolIndex || 0];
@@ -295,7 +292,7 @@ export const ThirdPersonCanvas: React.FC<ThirdPersonCanvasProps> = ({
           if (dist < 4) {
             npc.currentPatrolIndex = ((npc.currentPatrolIndex || 0) + 1) % npc.patrolPoints.length;
           } else {
-            const step = (npc.speed * dt * 42);
+            const step = (npc.speed * dt * 44);
             npc.x += (dx / dist) * Math.min(step, dist);
             npc.y += (dy / dist) * Math.min(step, dist);
 
@@ -308,13 +305,13 @@ export const ThirdPersonCanvas: React.FC<ThirdPersonCanvasProps> = ({
         }
       });
 
-      // 4. Check Nearest Interactable
+      // Check Nearest Interactable
       let closestInteractable: {
         name: string;
         actionPrompt: string;
         entity: CharacterEntity | null;
       } | null = null;
-      let minDistance = 85;
+      let minDistance = 90;
 
       npcs.forEach((npc) => {
         const dx = npc.x - player.x;
@@ -332,7 +329,7 @@ export const ThirdPersonCanvas: React.FC<ThirdPersonCanvasProps> = ({
 
         if (npc.detectionRadius && dist < npc.detectionRadius) {
           if (isMoving && !isSneaking && npc.role.includes('Guarda')) {
-            setTensionBpm((bpm) => Math.min(160, bpm + 0.12));
+            setTensionBpm((bpm) => Math.min(160, bpm + 0.1));
           }
         }
       });
@@ -341,7 +338,7 @@ export const ThirdPersonCanvas: React.FC<ThirdPersonCanvasProps> = ({
         const dx = (brazier.x + brazier.width / 2) - player.x;
         const dy = (brazier.y + brazier.height / 2) - player.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist < 90 && dist < minDistance) {
+        if (dist < 95 && dist < minDistance) {
           minDistance = dist;
           closestInteractable = {
             name: 'Braseiro de Carvão',
@@ -356,7 +353,7 @@ export const ThirdPersonCanvas: React.FC<ThirdPersonCanvasProps> = ({
         const dx = (gate.x + gate.width / 2) - player.x;
         const dy = (gate.y + gate.height / 2) - player.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist < 95 && dist < minDistance) {
+        if (dist < 100 && dist < minDistance) {
           minDistance = dist;
           closestInteractable = {
             name: 'Portão de Saída',
@@ -368,7 +365,7 @@ export const ThirdPersonCanvas: React.FC<ThirdPersonCanvasProps> = ({
 
       setNearestInteractable(closestInteractable);
 
-      // 5. Render Scene
+      // Render Frame
       renderScene();
 
       animationFrameId = requestAnimationFrame(loop);
@@ -376,7 +373,7 @@ export const ThirdPersonCanvas: React.FC<ThirdPersonCanvasProps> = ({
 
     animationFrameId = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(animationFrameId);
-  }, [player, npcs, activeDialogue, worldData, brightnessPreset]);
+  }, [player, npcs, activeDialogue, worldData, lightingMode, brightnessLevel]);
 
   // Circle vs Rect Collision
   const checkCollision = (cx: number, cy: number, cradius: number): boolean => {
@@ -413,7 +410,7 @@ export const ThirdPersonCanvas: React.FC<ThirdPersonCanvasProps> = ({
     return false;
   };
 
-  // Rendering Function with Vibrant Contrast & Catholic Iconography
+  // Rendering Function: 100% Crisp, Bright, High-Contrast & Catholic Iconography
   const renderScene = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -423,7 +420,6 @@ export const ThirdPersonCanvas: React.FC<ThirdPersonCanvasProps> = ({
     const viewportW = canvas.width;
     const viewportH = canvas.height;
 
-    // Smooth Camera Follow
     const targetCamX = player.x - viewportW / 2;
     const targetCamY = player.y - viewportH / 2;
     const camX = Math.max(
@@ -437,87 +433,97 @@ export const ThirdPersonCanvas: React.FC<ThirdPersonCanvasProps> = ({
 
     ctx.save();
     ctx.clearRect(0, 0, viewportW, viewportH);
+
+    // Apply brightness filter if adjusted
+    if (brightnessLevel !== 100) {
+      ctx.filter = `brightness(${brightnessLevel}%)`;
+    }
+
     ctx.translate(-camX, -camY);
 
-    // 1. Draw Courtyard Stone Paver Floor (Warm Jerusalem Limestone, NOT dark pitch black!)
-    const floorGrad = ctx.createLinearGradient(0, 0, worldData.width, worldData.height);
-    if (brightnessPreset === 'dawn') {
-      floorGrad.addColorStop(0, '#574134');
-      floorGrad.addColorStop(1, '#6b5443');
-    } else {
-      floorGrad.addColorStop(0, '#36322e');
-      floorGrad.addColorStop(1, '#443e39');
-    }
-    ctx.fillStyle = floorGrad;
+    // 1. Draw Courtyard Floor: BRIGHT Warm Jerusalem Sandstone (Pedra de Jerusalém Dourada e Areia Clara)
+    // NEVER dark or muddy! Pure bright Mediterranean limestone flagstones.
+    const isDaylight = lightingMode === 'daylight';
+    const baseStone = isDaylight ? '#e8dcbf' : '#d4c7a5';
+    const altStone = isDaylight ? '#f2e8cf' : '#decfae';
+    const mortarColor = isDaylight ? '#a8987d' : '#8c7d63';
+
+    ctx.fillStyle = baseStone;
     ctx.fillRect(0, 0, worldData.width, worldData.height);
 
-    // Detailed Tile Grid with Beveled Stones
+    // Stone Tiles Grid with Crisp Clean Borders
     const tileSize = 60;
     for (let x = 0; x < worldData.width; x += tileSize) {
       for (let y = 0; y < worldData.height; y += tileSize) {
-        // Tile Face with variation
         const hash = (x * 73856093 ^ y * 19349663) % 10;
-        ctx.fillStyle = hash > 5 ? '#3f3a34' : '#39342f';
-        ctx.fillRect(x + 1, y + 1, tileSize - 2, tileSize - 2);
+        ctx.fillStyle = hash > 4 ? altStone : baseStone;
+        ctx.fillRect(x + 1.5, y + 1.5, tileSize - 3, tileSize - 3);
 
-        // Mortar lines
-        ctx.strokeStyle = '#221e1a';
+        // Crisp beveled border
+        ctx.strokeStyle = mortarColor;
         ctx.lineWidth = 1.5;
         ctx.strokeRect(x, y, tileSize, tileSize);
 
-        // Subtle stone bevel highlight
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+        // Light bevel highlight on top and left edge of tile
+        ctx.strokeStyle = '#fff8e7';
+        ctx.lineWidth = 1.0;
         ctx.beginPath();
-        ctx.moveTo(x + 2, y + tileSize - 2);
+        ctx.moveTo(x + 2, y + tileSize - 3);
         ctx.lineTo(x + 2, y + 2);
-        ctx.lineTo(x + tileSize - 2, y + 2);
+        ctx.lineTo(x + tileSize - 3, y + 2);
         ctx.stroke();
       }
     }
 
-    // 2. Draw Walls & Colonnades with 3D Architectural Relief
+    // 2. Draw Walls & Colonnades with Bright Golden-Sandstone Relief
     worldData.walls.forEach((w) => {
       // Wall Shadow on Ground
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
+      ctx.fillStyle = 'rgba(70, 60, 45, 0.45)';
       ctx.fillRect(w.x + 8, w.y + 10, w.width, w.height);
 
-      // Limestone Wall Face with Gradient
+      // Chiseled Jerusalem Stone Wall Face (Warm Cream/Sand)
       const wallGrad = ctx.createLinearGradient(w.x, w.y, w.x, w.y + w.height);
-      wallGrad.addColorStop(0, '#857e74');
-      wallGrad.addColorStop(0.2, '#6b645b');
-      wallGrad.addColorStop(1, '#443e37');
+      wallGrad.addColorStop(0, '#f5efe0');
+      wallGrad.addColorStop(0.3, '#dfd3bc');
+      wallGrad.addColorStop(1, '#ab9b82');
       ctx.fillStyle = wallGrad;
       ctx.fillRect(w.x, w.y, w.width, w.height);
 
-      // Wall Edge Trim & Cornice
-      ctx.strokeStyle = '#a8a29e';
+      // High-contrast Wall Edge Trim & Cornice
+      ctx.strokeStyle = '#6e5e47';
       ctx.lineWidth = 2.5;
       ctx.strokeRect(w.x, w.y, w.width, w.height);
     });
 
-    // Draw Classical Columns (Corinthian style circle with shadow)
+    // Draw Classical White Marble Columns with Golden Capitals
     [
       { x: 268, y: 338 }, { x: 468, y: 338 }, { x: 868, y: 338 }, { x: 1068, y: 338 },
       { x: 268, y: 638 }, { x: 468, y: 638 }, { x: 868, y: 638 }, { x: 1068, y: 638 }
     ].forEach((col) => {
       // Column Shadow
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+      ctx.fillStyle = 'rgba(70, 60, 45, 0.4)';
       ctx.beginPath();
-      ctx.ellipse(col.x + 8, col.y + 10, 22, 14, 0, 0, Math.PI * 2);
+      ctx.ellipse(col.x + 8, col.y + 12, 24, 14, 0, 0, Math.PI * 2);
       ctx.fill();
 
-      // Column Shaft
-      const cGrad = ctx.createRadialGradient(col.x - 4, col.y - 4, 3, col.x, col.y, 20);
-      cGrad.addColorStop(0, '#e7e5e4');
-      cGrad.addColorStop(0.7, '#a8a29e');
-      cGrad.addColorStop(1, '#57534e');
+      // White-Cream Marble Shaft
+      const cGrad = ctx.createRadialGradient(col.x - 5, col.y - 5, 4, col.x, col.y, 22);
+      cGrad.addColorStop(0, '#ffffff');
+      cGrad.addColorStop(0.6, '#f3ece0');
+      cGrad.addColorStop(1, '#b5a489');
       ctx.fillStyle = cGrad;
       ctx.beginPath();
-      ctx.arc(col.x, col.y, 18, 0, Math.PI * 2);
+      ctx.arc(col.x, col.y, 20, 0, Math.PI * 2);
       ctx.fill();
-      ctx.strokeStyle = '#d6d3d1';
-      ctx.lineWidth = 2;
+      ctx.strokeStyle = '#857356';
+      ctx.lineWidth = 2.5;
       ctx.stroke();
+
+      // Golden Corinthian Capital Ring
+      ctx.fillStyle = '#f59e0b';
+      ctx.beginPath();
+      ctx.arc(col.x, col.y, 8, 0, Math.PI * 2);
+      ctx.fill();
     });
 
     // 3. Draw Props (Brazier, Benches, Upper Loggia)
@@ -527,22 +533,22 @@ export const ThirdPersonCanvas: React.FC<ThirdPersonCanvasProps> = ({
         const cy = prop.y + prop.height / 2;
 
         // Tripod Shadow
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+        ctx.fillStyle = 'rgba(70, 60, 45, 0.45)';
         ctx.beginPath();
-        ctx.ellipse(cx + 4, cy + 24, 34, 14, 0, 0, Math.PI * 2);
+        ctx.ellipse(cx + 6, cy + 24, 36, 14, 0, 0, Math.PI * 2);
         ctx.fill();
 
-        // Bronze Brazier Outer Lip
-        ctx.fillStyle = '#57534e';
+        // Bronze Brazier Bowl
+        ctx.fillStyle = '#78350f';
         ctx.beginPath();
-        ctx.arc(cx, cy, 26, 0, Math.PI * 2);
+        ctx.arc(cx, cy, 28, 0, Math.PI * 2);
         ctx.fill();
-        ctx.strokeStyle = '#d97706';
-        ctx.lineWidth = 3;
+        ctx.strokeStyle = '#f59e0b';
+        ctx.lineWidth = 3.5;
         ctx.stroke();
 
-        // Glowing Fiery Embers Interior
-        const emberGrad = ctx.createRadialGradient(cx, cy, 4, cx, cy, 24);
+        // Glowing Fiery Core
+        const emberGrad = ctx.createRadialGradient(cx, cy, 4, cx, cy, 26);
         emberGrad.addColorStop(0, '#ffffff');
         emberGrad.addColorStop(0.2, '#fef08a');
         emberGrad.addColorStop(0.5, '#f59e0b');
@@ -550,47 +556,47 @@ export const ThirdPersonCanvas: React.FC<ThirdPersonCanvasProps> = ({
         emberGrad.addColorStop(1, '#7f1d1d');
         ctx.fillStyle = emberGrad;
         ctx.beginPath();
-        ctx.arc(cx, cy, 22, 0, Math.PI * 2);
+        ctx.arc(cx, cy, 24, 0, Math.PI * 2);
         ctx.fill();
 
         // Animated Flame Tongues
-        ctx.fillStyle = 'rgba(254, 240, 138, 0.85)';
+        ctx.fillStyle = '#fef08a';
         for (let i = 0; i < 4; i++) {
           const angle = (i * Math.PI) / 2 + flameFlicker * 0.5;
-          const fx = cx + Math.cos(angle) * 8;
-          const fy = cy + Math.sin(angle) * 8 - 4;
+          const fx = cx + Math.cos(angle) * 9;
+          const fy = cy + Math.sin(angle) * 9 - 4;
           ctx.beginPath();
-          ctx.arc(fx, fy, 6 * flameFlicker, 0, Math.PI * 2);
+          ctx.arc(fx, fy, 7 * flameFlicker, 0, Math.PI * 2);
           ctx.fill();
         }
       } else if (prop.type === 'bench') {
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+        ctx.fillStyle = 'rgba(70, 60, 45, 0.35)';
         ctx.fillRect(prop.x + 6, prop.y + 8, prop.width, prop.height);
-        ctx.fillStyle = '#78716c';
+        ctx.fillStyle = '#d4c7a5';
         ctx.fillRect(prop.x, prop.y, prop.width, prop.height);
-        ctx.strokeStyle = '#d6d3d1';
-        ctx.lineWidth = 1.5;
+        ctx.strokeStyle = '#6e5e47';
+        ctx.lineWidth = 2;
         ctx.strokeRect(prop.x, prop.y, prop.width, prop.height);
       } else if (prop.type === 'gate') {
-        ctx.fillStyle = 'rgba(180, 83, 9, 0.2)';
+        ctx.fillStyle = 'rgba(245, 158, 11, 0.25)';
         ctx.fillRect(prop.x, prop.y, prop.width, prop.height);
-        ctx.strokeStyle = '#f59e0b';
-        ctx.lineWidth = 3;
-        ctx.setLineDash([6, 4]);
+        ctx.strokeStyle = '#d97706';
+        ctx.lineWidth = 3.5;
+        ctx.setLineDash([8, 4]);
         ctx.strokeRect(prop.x, prop.y, prop.width, prop.height);
         ctx.setLineDash([]);
       }
     });
 
-    // Draw Rising Flame Embers Particles
+    // Rising Flame Embers Particles
     embersRef.current.forEach((emb) => {
-      ctx.fillStyle = `rgba(254, 215, 170, ${emb.alpha})`;
+      ctx.fillStyle = `rgba(234, 88, 12, ${emb.alpha})`;
       ctx.beginPath();
       ctx.arc(emb.x, emb.y, emb.size, 0, Math.PI * 2);
       ctx.fill();
     });
 
-    // 4. Draw NPCs with Catholic Iconography
+    // 4. Draw NPCs with Catholic Iconography & Clear Dark Outlines
     npcs.forEach((npc) => {
       drawIconographicCharacter(
         ctx,
@@ -605,10 +611,10 @@ export const ThirdPersonCanvas: React.FC<ThirdPersonCanvasProps> = ({
 
       // Speech Bark Bubble
       if (npc.barkText) {
-        ctx.font = 'italic 11px Inter, sans-serif';
-        ctx.fillStyle = '#fef08a';
+        ctx.font = 'bold italic 11px Inter, sans-serif';
+        ctx.fillStyle = '#854d0e';
         ctx.textAlign = 'center';
-        ctx.fillText(`"${npc.barkText}"`, npc.x, npc.y - 48);
+        ctx.fillText(`"${npc.barkText}"`, npc.x, npc.y - 54);
       }
     });
 
@@ -625,104 +631,72 @@ export const ThirdPersonCanvas: React.FC<ThirdPersonCanvasProps> = ({
       player.walkCycle
     );
 
-    // 6. Dynamic Lighting & Torchlight Radial Mask
-    // In 'luminous' mode, ambient darkness is subtle so everything remains visible and crisp!
-    ctx.save();
-    let ambientAlpha = 0.38;
-    if (brightnessPreset === 'dawn') ambientAlpha = 0.20;
-    if (brightnessPreset === 'dramatic') ambientAlpha = 0.65;
+    // 6. Optional Lighting Overlay (Zero opacity in 'daylight' mode = 100% visibility!)
+    if (lightingMode === 'torchlit') {
+      ctx.save();
+      // Very gentle warm golden evening tint, NEVER opaque dark mud!
+      ctx.fillStyle = 'rgba(120, 80, 40, 0.12)';
+      ctx.fillRect(0, 0, worldData.width, worldData.height);
 
-    ctx.fillStyle = `rgba(10, 16, 30, ${ambientAlpha})`;
-    ctx.fillRect(0, 0, worldData.width, worldData.height);
-
-    // Cutout torchlight & fire radiance using 'destination-out'
-    ctx.globalCompositeOperation = 'destination-out';
-
-    // Central Brazier Radiant Glow
-    const brazier = worldData.props.find((p) => p.id === 'brazier_central');
-    if (brazier && brazier.lightRadius) {
-      const radius = brazier.lightRadius * flameFlicker;
-      const bRad = ctx.createRadialGradient(
-        brazier.x + brazier.width / 2,
-        brazier.y + brazier.height / 2,
-        15,
-        brazier.x + brazier.width / 2,
-        brazier.y + brazier.height / 2,
-        radius
-      );
-      bRad.addColorStop(0, 'rgba(0, 0, 0, 1.0)');
-      bRad.addColorStop(0.5, 'rgba(0, 0, 0, 0.7)');
-      bRad.addColorStop(1, 'rgba(0, 0, 0, 0)');
-      ctx.fillStyle = bRad;
-      ctx.beginPath();
-      ctx.arc(
-        brazier.x + brazier.width / 2,
-        brazier.y + brazier.height / 2,
-        radius,
-        0,
-        Math.PI * 2
-      );
-      ctx.fill();
-    }
-
-    // Wall Torches Radiant Halos
-    worldData.props
-      .filter((p) => p.type === 'brazier' && p.id !== 'brazier_central')
-      .forEach((t) => {
-        const radius = (t.lightRadius || 180) * flameFlicker;
-        const grad = ctx.createRadialGradient(t.x + 10, t.y + 10, 8, t.x + 10, t.y + 10, radius);
-        grad.addColorStop(0, 'rgba(0, 0, 0, 0.95)');
-        grad.addColorStop(0.6, 'rgba(0, 0, 0, 0.5)');
-        grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
-        ctx.fillStyle = grad;
+      // Warm radial fires
+      const brazier = worldData.props.find((p) => p.id === 'brazier_central');
+      if (brazier && brazier.lightRadius) {
+        const radius = brazier.lightRadius * flameFlicker;
+        const bRad = ctx.createRadialGradient(
+          brazier.x + brazier.width / 2,
+          brazier.y + brazier.height / 2,
+          20,
+          brazier.x + brazier.width / 2,
+          brazier.y + brazier.height / 2,
+          radius
+        );
+        bRad.addColorStop(0, 'rgba(254, 240, 138, 0.35)');
+        bRad.addColorStop(1, 'rgba(254, 240, 138, 0)');
+        ctx.fillStyle = bRad;
         ctx.beginPath();
-        ctx.arc(t.x + 10, t.y + 10, radius, 0, Math.PI * 2);
+        ctx.arc(
+          brazier.x + brazier.width / 2,
+          brazier.y + brazier.height / 2,
+          radius,
+          0,
+          Math.PI * 2
+        );
         ctx.fill();
-      });
-
-    // Player Radiant Sacred Aura
-    const pGrad = ctx.createRadialGradient(player.x, player.y, 10, player.x, player.y, 110);
-    pGrad.addColorStop(0, 'rgba(0, 0, 0, 0.85)');
-    pGrad.addColorStop(0.6, 'rgba(0, 0, 0, 0.45)');
-    pGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
-    ctx.fillStyle = pGrad;
-    ctx.beginPath();
-    ctx.arc(player.x, player.y, 110, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.restore(); // Restore darkness composite
+      }
+      ctx.restore();
+    }
 
     // 7. Interactive Floating Prompt Pill
     if (nearestInteractable) {
       let targetX = player.x;
-      let targetY = player.y - 64;
+      let targetY = player.y - 70;
 
       if (nearestInteractable.entity) {
         targetX = nearestInteractable.entity.x;
-        targetY = nearestInteractable.entity.y - 64;
+        targetY = nearestInteractable.entity.y - 70;
       }
 
-      ctx.font = 'bold 12px Cinzel, serif';
-      const promptWidth = ctx.measureText(nearestInteractable.actionPrompt).width + 28;
+      ctx.font = 'bold 13px Cinzel, serif';
+      const promptWidth = ctx.measureText(nearestInteractable.actionPrompt).width + 32;
 
-      ctx.fillStyle = 'rgba(12, 10, 9, 0.95)';
+      ctx.fillStyle = '#0f172a';
       ctx.strokeStyle = '#f59e0b';
-      ctx.lineWidth = 2;
+      ctx.lineWidth = 2.5;
 
       ctx.beginPath();
-      ctx.roundRect(targetX - promptWidth / 2, targetY - 14, promptWidth, 28, 8);
+      ctx.roundRect(targetX - promptWidth / 2, targetY - 16, promptWidth, 32, 10);
       ctx.fill();
       ctx.stroke();
 
       ctx.fillStyle = '#fef08a';
       ctx.textAlign = 'center';
-      ctx.fillText(nearestInteractable.actionPrompt, targetX, targetY + 5);
+      ctx.fillText(nearestInteractable.actionPrompt, targetX, targetY + 6);
     }
 
-    ctx.restore(); // Restore camera translation
+    ctx.restore();
   };
 
-  // Helper: Draw Character with Specific Catholic Iconography
+  // Helper: Draw Character with Authentic Catholic Iconography
   const drawIconographicCharacter = (
     ctx: CanvasRenderingContext2D,
     x: number,
@@ -737,262 +711,286 @@ export const ThirdPersonCanvas: React.FC<ThirdPersonCanvasProps> = ({
     ctx.save();
 
     // 1. Drop Shadow on Ground
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
+    ctx.fillStyle = 'rgba(70, 60, 45, 0.45)';
     ctx.beginPath();
-    ctx.ellipse(x, y + 16, 20, 9, 0, 0, Math.PI * 2);
+    ctx.ellipse(x, y + 18, 22, 10, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // Walking leg offset
-    const legOffset = isMoving ? Math.sin(walkCycle) * 7 : 0;
+    const legOffset = isMoving ? Math.sin(walkCycle) * 8 : 0;
 
     // 2. Catholic Iconographic Halos (Nimbo Sagrado)
     if (iconography === 'peter' || iconography === 'paul') {
       // Golden Halo of the Apostle
-      const haloGrad = ctx.createRadialGradient(x, y - 20, 8, x, y - 20, 26);
-      haloGrad.addColorStop(0, 'rgba(254, 240, 138, 0.85)');
-      haloGrad.addColorStop(0.7, 'rgba(234, 179, 8, 0.7)');
-      haloGrad.addColorStop(1, 'rgba(161, 98, 7, 0)');
+      const haloGrad = ctx.createRadialGradient(x, y - 24, 10, x, y - 24, 30);
+      haloGrad.addColorStop(0, '#fef08a');
+      haloGrad.addColorStop(0.7, '#eab308');
+      haloGrad.addColorStop(1, 'rgba(202, 138, 4, 0)');
       ctx.fillStyle = haloGrad;
       ctx.beginPath();
-      ctx.arc(x, y - 20, 26, 0, Math.PI * 2);
+      ctx.arc(x, y - 24, 30, 0, Math.PI * 2);
       ctx.fill();
-      ctx.strokeStyle = '#fef08a';
-      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = '#facc15';
+      ctx.lineWidth = 2;
       ctx.stroke();
     } else if (iconography === 'christ') {
       // CRUCIFORM HALO OF CHRIST (NIMBO CRUCIFORME)
-      const cHaloGrad = ctx.createRadialGradient(x, y - 20, 10, x, y - 20, 30);
-      cHaloGrad.addColorStop(0, 'rgba(255, 255, 255, 0.95)');
-      cHaloGrad.addColorStop(0.5, 'rgba(250, 204, 21, 0.85)');
+      const cHaloGrad = ctx.createRadialGradient(x, y - 24, 10, x, y - 24, 34);
+      cHaloGrad.addColorStop(0, '#ffffff');
+      cHaloGrad.addColorStop(0.6, '#facc15');
       cHaloGrad.addColorStop(1, 'rgba(202, 138, 4, 0)');
       ctx.fillStyle = cHaloGrad;
       ctx.beginPath();
-      ctx.arc(x, y - 20, 30, 0, Math.PI * 2);
+      ctx.arc(x, y - 24, 34, 0, Math.PI * 2);
       ctx.fill();
 
-      // Inscribed Red Greek Cross inside the Nimbus
+      // Red Greek Cross inside the Nimbus
       ctx.fillStyle = '#dc2626';
       // Vertical bar
-      ctx.fillRect(x - 3, y - 48, 6, 28);
+      ctx.fillRect(x - 3.5, y - 56, 7, 32);
       // Horizontal bar
-      ctx.fillRect(x - 17, y - 23, 34, 6);
+      ctx.fillRect(x - 20, y - 27.5, 40, 7);
 
       ctx.strokeStyle = '#fef08a';
-      ctx.lineWidth = 2;
+      ctx.lineWidth = 2.5;
       ctx.beginPath();
-      ctx.arc(x, y - 20, 28, 0, Math.PI * 2);
+      ctx.arc(x, y - 24, 32, 0, Math.PI * 2);
       ctx.stroke();
     }
 
     // 3. Sandals & Legs
-    ctx.fillStyle = '#451a03'; // Brown leather sandals
-    ctx.fillRect(x - 9, y + 12 + legOffset, 7, 8);
-    ctx.fillRect(x + 2, y + 12 - legOffset, 7, 8);
+    ctx.fillStyle = '#451a03'; // Leather sandals
+    ctx.fillRect(x - 10, y + 14 + legOffset, 8, 9);
+    ctx.fillRect(x + 2, y + 14 - legOffset, 8, 9);
 
     // 4. Robes and Mantle by Iconographic Type
     if (iconography === 'peter') {
-      // São Pedro: Cobalt Blue Tunic + Golden Ochre Mantle (Tradição Católica)
-      ctx.fillStyle = '#1e3a8a'; // Blue tunic
+      // SÃO PEDRO: Cobalt Blue Tunic + Golden Ochre Mantle (Tradição Católica)
+      ctx.fillStyle = '#1d4ed8'; // Vibrant Blue tunic
       ctx.beginPath();
-      ctx.roundRect(x - 14, y - 12, 28, 26, 6);
+      ctx.roundRect(x - 16, y - 14, 32, 30, 7);
       ctx.fill();
+      ctx.strokeStyle = '#0f172a';
+      ctx.lineWidth = 2;
+      ctx.stroke();
 
-      // Golden Yellow Mantle draped over left shoulder
-      ctx.fillStyle = '#ca8a04';
+      // Golden Yellow Mantle draped over shoulder
+      ctx.fillStyle = '#eab308';
       ctx.beginPath();
-      ctx.moveTo(x - 14, y - 12);
-      ctx.lineTo(x + 8, y - 12);
-      ctx.lineTo(x + 14, y + 14);
-      ctx.lineTo(x - 12, y + 14);
+      ctx.moveTo(x - 16, y - 14);
+      ctx.lineTo(x + 10, y - 14);
+      ctx.lineTo(x + 16, y + 16);
+      ctx.lineTo(x - 14, y + 16);
       ctx.closePath();
       ctx.fill();
+      ctx.strokeStyle = '#a16207';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
 
       // Golden & Silver Keys of St. Peter (Duae Claves Regni) at hip
       ctx.strokeStyle = '#facc15';
-      ctx.lineWidth = 2;
+      ctx.lineWidth = 2.5;
       ctx.beginPath();
-      ctx.arc(x + 13, y + 6, 3, 0, Math.PI * 2);
-      ctx.moveTo(x + 13, y + 9);
-      ctx.lineTo(x + 13, y + 18);
-      ctx.moveTo(x + 13, y + 14);
-      ctx.lineTo(x + 16, y + 14);
+      ctx.arc(x + 15, y + 6, 4, 0, Math.PI * 2);
+      ctx.moveTo(x + 15, y + 10);
+      ctx.lineTo(x + 15, y + 20);
+      ctx.moveTo(x + 15, y + 16);
+      ctx.lineTo(x + 19, y + 16);
       ctx.stroke();
     } else if (iconography === 'christ') {
-      // Jesus: Seamless Holy White Tunic + Crimson Mantle
+      // JESUS CRISTO: Seamless Pure White Tunic + Crimson Mantle
       ctx.fillStyle = '#ffffff';
       ctx.beginPath();
-      ctx.roundRect(x - 14, y - 12, 28, 26, 6);
+      ctx.roundRect(x - 16, y - 14, 32, 30, 7);
       ctx.fill();
+      ctx.strokeStyle = '#64748b';
+      ctx.lineWidth = 2;
+      ctx.stroke();
 
       // Sacred Crimson Red Mantle
-      ctx.fillStyle = '#991b1b';
+      ctx.fillStyle = '#b91c1c';
       ctx.beginPath();
-      ctx.arc(x - 6, y, 14, 0, Math.PI * 2);
+      ctx.arc(x - 7, y, 16, 0, Math.PI * 2);
       ctx.fill();
+      ctx.strokeStyle = '#7f1d1d';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
 
-      // Bound wrists with hemp rope
+      // Bound wrists with rope
       ctx.strokeStyle = '#b45309';
-      ctx.lineWidth = 3;
+      ctx.lineWidth = 3.5;
       ctx.beginPath();
-      ctx.moveTo(x - 6, y + 6);
-      ctx.lineTo(x + 6, y + 6);
+      ctx.moveTo(x - 8, y + 8);
+      ctx.lineTo(x + 8, y + 8);
       ctx.stroke();
     } else if (iconography === 'malchus_kin') {
-      // Kinsman of Malchus: Dark Levantine Tunic + Bandaged Right Ear!
-      ctx.fillStyle = '#451a03';
+      // PARENTE DE MALCO: Dark Levantine Tunic + Bandaged Right Ear
+      ctx.fillStyle = '#5c2c16';
       ctx.beginPath();
-      ctx.roundRect(x - 13, y - 12, 26, 26, 5);
+      ctx.roundRect(x - 15, y - 14, 30, 30, 6);
       ctx.fill();
+      ctx.strokeStyle = '#1c1917';
+      ctx.lineWidth = 2;
+      ctx.stroke();
     } else if (iconography === 'roman_soldier') {
-      // Roman Legionnaire: Lorica Segmentata + Red Tunic
-      ctx.fillStyle = '#991b1b'; // Red tunic
-      ctx.fillRect(x - 14, y - 10, 28, 25);
+      // ROMAN LEGIONNAIRE: Imperial Red Tunic + Lorica Segmentata
+      ctx.fillStyle = '#b91c1c'; // Red tunic
+      ctx.fillRect(x - 16, y - 12, 32, 28);
 
       // Silver Segmented Plate Armor (Lorica)
-      ctx.fillStyle = '#94a3b8';
-      ctx.fillRect(x - 12, y - 8, 24, 18);
-      ctx.strokeStyle = '#cbd5e1';
-      ctx.lineWidth = 1.5;
-      ctx.strokeRect(x - 12, y - 8, 24, 18);
+      ctx.fillStyle = '#cbd5e1';
+      ctx.fillRect(x - 14, y - 10, 28, 20);
+      ctx.strokeStyle = '#475569';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(x - 14, y - 10, 28, 20);
     } else if (iconography === 'temple_guard') {
-      // Levitical Temple Guard: Blue & White Priestly Stripes
+      // LEVITICAL TEMPLE GUARD: Blue & White Priestly Stripes
       ctx.fillStyle = '#1e3a8a';
-      ctx.fillRect(x - 13, y - 10, 26, 25);
+      ctx.fillRect(x - 15, y - 12, 30, 28);
       ctx.fillStyle = '#ffffff';
-      ctx.fillRect(x - 4, y - 10, 8, 25);
+      ctx.fillRect(x - 5, y - 12, 10, 28);
+      ctx.strokeStyle = '#0f172a';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(x - 15, y - 12, 30, 28);
     } else if (iconography === 'servant_girl') {
-      // Maidservant: Terracotta Dress
-      ctx.fillStyle = '#b45309';
+      // MAIDSERVANT: Terracotta Dress + Modest Veil
+      ctx.fillStyle = '#c2410c';
       ctx.beginPath();
-      ctx.roundRect(x - 12, y - 10, 24, 25, 6);
+      ctx.roundRect(x - 14, y - 12, 28, 28, 7);
       ctx.fill();
+      ctx.strokeStyle = '#7c2d12';
+      ctx.lineWidth = 2;
+      ctx.stroke();
     } else {
-      // Default Robe
-      ctx.fillStyle = '#334155';
+      ctx.fillStyle = '#475569';
       ctx.beginPath();
-      ctx.roundRect(x - 13, y - 10, 26, 25, 5);
+      ctx.roundRect(x - 15, y - 12, 30, 28, 6);
       ctx.fill();
+      ctx.strokeStyle = '#1e293b';
+      ctx.lineWidth = 2;
+      ctx.stroke();
     }
 
     // 5. Head & Facial Features by Iconography
     const skinTone = iconography === 'christ' ? '#fde8cd' : '#f0c8a0';
     ctx.fillStyle = skinTone;
     ctx.beginPath();
-    ctx.arc(x, y - 16, 12, 0, Math.PI * 2);
+    ctx.arc(x, y - 18, 14, 0, Math.PI * 2);
     ctx.fill();
+    ctx.strokeStyle = '#78350f';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
 
     // Specific Hair, Beard and Headwear
     if (iconography === 'peter') {
       // St. Peter: Short curly silver-white hair and rounded grey beard with tonsure
       ctx.fillStyle = '#e2e8f0'; // White / silver hair
-      // Curly hair ring
       ctx.beginPath();
-      ctx.arc(x, y - 20, 13, Math.PI, Math.PI * 2);
+      ctx.arc(x, y - 22, 15, Math.PI, Math.PI * 2);
       ctx.fill();
       // Round curly white beard
       ctx.beginPath();
-      ctx.arc(x, y - 14, 12, 0, Math.PI);
+      ctx.arc(x, y - 16, 14, 0, Math.PI);
       ctx.fill();
     } else if (iconography === 'christ') {
       // Jesus: Long wavy chestnut-brown hair parted in the middle falling to shoulders
       ctx.fillStyle = '#5c2c16';
-      // Left and right parted shoulder locks
-      ctx.fillRect(x - 14, y - 24, 6, 20);
-      ctx.fillRect(x + 8, y - 24, 6, 20);
+      ctx.fillRect(x - 16, y - 26, 7, 24);
+      ctx.fillRect(x + 9, y - 26, 7, 24);
       // Trimmed chestnut beard
       ctx.beginPath();
-      ctx.arc(x, y - 13, 11, 0, Math.PI);
+      ctx.arc(x, y - 15, 13, 0, Math.PI);
       ctx.fill();
     } else if (iconography === 'malchus_kin') {
       // Dark beard
       ctx.fillStyle = '#1c1917';
       ctx.beginPath();
-      ctx.arc(x, y - 14, 12, 0, Math.PI);
+      ctx.arc(x, y - 16, 14, 0, Math.PI);
       ctx.fill();
 
       // BANDAGED RIGHT EAR (ICONIC DETAIL OF MALCHUS' EAR STRUCK IN GETHSEMANE!)
       ctx.fillStyle = '#ffffff'; // White linen bandage wrap
-      ctx.fillRect(x + 8, y - 20, 6, 10);
-      ctx.fillStyle = '#ef4444'; // Bloodstain on bandage
-      ctx.fillRect(x + 10, y - 17, 3, 4);
+      ctx.fillRect(x + 9, y - 22, 7, 12);
+      ctx.strokeStyle = '#b91c1c'; // Bloodstain
+      ctx.lineWidth = 2;
+      ctx.strokeRect(x + 10, y - 19, 4, 6);
     } else if (iconography === 'roman_soldier') {
       // Roman Brass Helmet (Galea) with Red Horsehair Crest
-      ctx.fillStyle = '#d97706'; // Brass helmet
+      ctx.fillStyle = '#d97706';
       ctx.beginPath();
-      ctx.arc(x, y - 18, 13, Math.PI, Math.PI * 2);
+      ctx.arc(x, y - 20, 15, Math.PI, Math.PI * 2);
       ctx.fill();
       // Red Imperial Crest
       ctx.fillStyle = '#dc2626';
-      ctx.fillRect(x - 3, y - 32, 6, 14);
+      ctx.fillRect(x - 4, y - 36, 8, 16);
     } else if (iconography === 'temple_guard') {
       // Levitical White Turban (Migbahat)
-      ctx.fillStyle = '#f8fafc';
+      ctx.fillStyle = '#ffffff';
       ctx.beginPath();
-      ctx.ellipse(x, y - 22, 13, 8, 0, 0, Math.PI * 2);
+      ctx.ellipse(x, y - 24, 15, 9, 0, 0, Math.PI * 2);
       ctx.fill();
-      ctx.strokeStyle = '#3b82f6';
-      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = '#1d4ed8';
+      ctx.lineWidth = 2;
       ctx.stroke();
     } else if (iconography === 'servant_girl') {
       // Jewish Modesty Head-veil (Mitpachat)
-      ctx.fillStyle = '#fef3c7';
+      ctx.fillStyle = '#ffffff';
       ctx.beginPath();
-      ctx.ellipse(x, y - 20, 13, 8, 0, 0, Math.PI * 2);
+      ctx.ellipse(x, y - 22, 15, 9, 0, 0, Math.PI * 2);
       ctx.fill();
-      ctx.fillRect(x - 13, y - 20, 6, 16);
-      ctx.fillRect(x + 7, y - 20, 6, 16);
+      ctx.fillRect(x - 15, y - 22, 7, 18);
+      ctx.fillRect(x + 8, y - 22, 7, 18);
     }
 
     // Directional Eyes
-    ctx.fillStyle = '#1c1917';
+    ctx.fillStyle = '#0f172a';
     let eyeOffsetX = 0;
     let eyeOffsetY = 0;
-    if (facing === 'left') eyeOffsetX = -3.5;
-    if (facing === 'right') eyeOffsetX = 3.5;
-    if (facing === 'up') eyeOffsetY = -2.5;
-    if (facing === 'down') eyeOffsetY = 2.5;
+    if (facing === 'left') eyeOffsetX = -4;
+    if (facing === 'right') eyeOffsetX = 4;
+    if (facing === 'up') eyeOffsetY = -3;
+    if (facing === 'down') eyeOffsetY = 3;
 
     if (facing !== 'up') {
-      ctx.fillRect(x - 4 + eyeOffsetX, y - 18 + eyeOffsetY, 3, 3);
-      ctx.fillRect(x + 2 + eyeOffsetX, y - 18 + eyeOffsetY, 3, 3);
+      ctx.fillRect(x - 5 + eyeOffsetX, y - 20 + eyeOffsetY, 3.5, 3.5);
+      ctx.fillRect(x + 2 + eyeOffsetX, y - 20 + eyeOffsetY, 3.5, 3.5);
     }
 
     // Spear for Guards
     if (iconography === 'temple_guard' || iconography === 'roman_soldier') {
-      ctx.strokeStyle = '#d4af37';
-      ctx.lineWidth = 2.5;
+      ctx.strokeStyle = '#b45309';
+      ctx.lineWidth = 3;
       ctx.beginPath();
-      ctx.moveTo(x + 16, y + 18);
-      ctx.lineTo(x + 16, y - 40);
+      ctx.moveTo(x + 18, y + 20);
+      ctx.lineTo(x + 18, y - 44);
       ctx.stroke();
 
       // Spear tip
       ctx.fillStyle = '#f1f5f9';
       ctx.beginPath();
-      ctx.moveTo(x + 16, y - 50);
-      ctx.lineTo(x + 11, y - 40);
-      ctx.lineTo(x + 21, y - 40);
+      ctx.moveTo(x + 18, y - 56);
+      ctx.lineTo(x + 12, y - 44);
+      ctx.lineTo(x + 24, y - 44);
       ctx.closePath();
       ctx.fill();
+      ctx.strokeStyle = '#475569';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
     }
 
-    // 6. Overhead Name Label
+    // 6. Overhead Name Label with Solid High-Contrast Badge
     ctx.font = 'bold 12px Cinzel, serif';
+    const textWidth = ctx.measureText(name).width;
+
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
+    ctx.roundRect(x - textWidth / 2 - 6, y - 48, textWidth + 12, 18, 5);
+    ctx.fill();
+    ctx.strokeStyle = iconography === 'christ' ? '#eab308' : '#38bdf8';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    ctx.fillStyle = iconography === 'christ' ? '#fef08a' : '#f8fafc';
     ctx.textAlign = 'center';
-    if (iconography === 'christ') {
-      ctx.fillStyle = '#fef08a';
-      ctx.shadowColor = '#f59e0b';
-      ctx.shadowBlur = 6;
-    } else if (iconography === 'peter') {
-      ctx.fillStyle = '#67e8f9';
-      ctx.shadowColor = '#06b6d4';
-      ctx.shadowBlur = 4;
-    } else {
-      ctx.fillStyle = '#fde68a';
-      ctx.shadowBlur = 0;
-    }
-    ctx.fillText(name, x, y - 34);
-    ctx.shadowBlur = 0; // Reset shadow
+    ctx.fillText(name, x, y - 35);
 
     ctx.restore();
   };
@@ -1007,13 +1005,13 @@ export const ThirdPersonCanvas: React.FC<ThirdPersonCanvasProps> = ({
   };
 
   return (
-    <div className="relative w-full rounded-2xl overflow-hidden border-2 border-amber-600/70 shadow-2xl bg-stonebg-950 select-none">
+    <div className="relative w-full rounded-2xl overflow-hidden border-2 border-amber-500 shadow-2xl bg-stone-900 select-none">
       
       {/* Top HUD Overlay */}
       <div className="absolute top-3 left-3 right-3 z-30 flex items-center justify-between pointer-events-none">
         
         {/* Location & Year Badge */}
-        <div className="bg-stone-950/90 backdrop-blur border border-amber-700/60 rounded-xl px-4 py-2 pointer-events-auto flex items-center gap-3 shadow-xl">
+        <div className="bg-stone-900/95 backdrop-blur border-2 border-amber-600/70 rounded-xl px-4 py-2 pointer-events-auto flex items-center gap-3 shadow-xl">
           <MapPin className="w-4 h-4 text-amber-400" />
           <div>
             <h4 className="font-serif font-bold text-xs text-amber-100 tracking-wider">
@@ -1025,52 +1023,50 @@ export const ThirdPersonCanvas: React.FC<ThirdPersonCanvasProps> = ({
           </div>
         </div>
 
-        {/* Center: Heartbeat & Quick Brightness Preset Toggle */}
+        {/* Center: Heartbeat & Instant Lighting Mode Toggle */}
         <div className="flex items-center gap-2 pointer-events-auto">
           {/* Heartbeat & Tension Indicator */}
-          <div className="bg-stone-950/90 backdrop-blur border border-red-800/70 rounded-xl px-3.5 py-1.5 flex items-center gap-2.5 shadow-xl">
+          <div className="bg-stone-900/95 backdrop-blur border border-red-700 rounded-xl px-3.5 py-1.5 flex items-center gap-2.5 shadow-xl">
             <Heart className="w-4 h-4 text-red-500 fill-current animate-ping" />
             <div className="flex flex-col">
-              <span className="text-[9px] font-serif text-stone-400 uppercase">Tensão</span>
+              <span className="text-[9px] font-serif text-stone-400 uppercase">Tensão Cardíaca</span>
               <span className="font-mono font-bold text-red-300 text-xs">{Math.round(tensionBpm)} BPM</span>
             </div>
           </div>
 
-          {/* Quick Brightness Toggle Button */}
+          {/* Daylight / Full Visibility Button */}
           <button
-            onClick={() => {
-              if (brightnessPreset === 'luminous') setBrightnessPreset('dawn');
-              else if (brightnessPreset === 'dawn') setBrightnessPreset('dramatic');
-              else setBrightnessPreset('luminous');
-            }}
-            className="bg-stone-950/90 backdrop-blur border border-amber-600/60 hover:border-amber-400 rounded-xl px-3 py-2 text-[10px] font-serif text-amber-200 flex items-center gap-1.5 shadow-lg transition"
-            title="Alternar Modo de Iluminação (Visibilidade Alta)"
+            onClick={() => setLightingMode((prev) => (prev === 'daylight' ? 'torchlit' : 'daylight'))}
+            className={`px-3 py-2 rounded-xl text-xs font-serif font-bold flex items-center gap-1.5 shadow-xl border-2 transition ${
+              lightingMode === 'daylight'
+                ? 'bg-amber-500 text-stone-950 border-amber-300'
+                : 'bg-stone-900 text-amber-200 border-amber-600/70 hover:border-amber-400'
+            }`}
+            title="Alternar Iluminação: Luz Plena ou Noite Iluminada"
           >
-            <Sun className="w-3.5 h-3.5 text-yellow-400" />
-            <span className="hidden sm:inline">
-              Luz: {brightnessPreset === 'luminous' ? 'Enluarada (Alta)' : brightnessPreset === 'dawn' ? 'Alvorada' : 'Contraste'}
-            </span>
+            <Sun className="w-4 h-4 fill-current" />
+            <span>{lightingMode === 'daylight' ? 'Luz Plena (100% Claro)' : 'Noite Iluminada'}</span>
           </button>
         </div>
 
         {/* Mini-Map Radar (Top Right) */}
         <div
           onClick={() => setShowFullMap(true)}
-          className="bg-stone-950/90 backdrop-blur border-2 border-amber-500 rounded-xl p-2 pointer-events-auto cursor-pointer hover:border-amber-300 shadow-2xl transition group"
-          title="Clique para abrir o Mapa Completo [M]"
+          className="bg-stone-900/95 backdrop-blur border-2 border-amber-500 rounded-xl p-2 pointer-events-auto cursor-pointer hover:border-amber-300 shadow-2xl transition group"
+          title="Clique para abrir a Planta Completa [M]"
         >
           <div className="flex items-center justify-between text-[10px] font-serif text-amber-400 mb-1 px-1">
             <span className="flex items-center gap-1">
               <Compass className="w-3 h-3 text-amber-400" /> Radar
             </span>
-            <Maximize2 className="w-3 h-3 text-stone-400 group-hover:text-amber-300" />
+            <Maximize2 className="w-3 h-3 text-stone-300 group-hover:text-amber-300" />
           </div>
 
           {/* Canvas Radar Graphic */}
-          <div className="relative w-28 h-20 bg-stone-900 rounded border border-stone-800 overflow-hidden">
+          <div className="relative w-28 h-20 bg-stone-950 rounded border border-stone-800 overflow-hidden">
             {/* Player Blip */}
             <div
-              className="absolute w-2.5 h-2.5 rounded-full bg-cyan-400 ring-2 ring-cyan-200/50 -translate-x-1/2 -translate-y-1/2"
+              className="absolute w-3 h-3 rounded-full bg-cyan-400 ring-2 ring-white -translate-x-1/2 -translate-y-1/2"
               style={{
                 left: `${(player.x / worldData.width) * 100}%`,
                 top: `${(player.y / worldData.height) * 100}%`,
@@ -1083,7 +1079,7 @@ export const ThirdPersonCanvas: React.FC<ThirdPersonCanvasProps> = ({
               style={{ left: '46%', top: '50%' }}
             />
 
-            {/* Christ Blip on Balcony */}
+            {/* Christ Blip */}
             <div
               className="absolute w-2.5 h-2.5 rounded-full bg-yellow-300 -translate-x-1/2 -translate-y-1/2"
               style={{ left: '49%', top: '8%' }}
@@ -1091,7 +1087,7 @@ export const ThirdPersonCanvas: React.FC<ThirdPersonCanvasProps> = ({
 
             {/* Exit Gate Blip */}
             <div
-              className="absolute w-3.5 h-1.5 bg-amber-400 -translate-x-1/2"
+              className="absolute w-4 h-2 bg-amber-400 -translate-x-1/2"
               style={{ left: '42%', top: '90%' }}
             />
 
@@ -1099,7 +1095,7 @@ export const ThirdPersonCanvas: React.FC<ThirdPersonCanvasProps> = ({
             {npcs.map((n) => (
               <div
                 key={n.id}
-                className={`absolute w-1.5 h-1.5 rounded-full -translate-x-1/2 -translate-y-1/2 ${
+                className={`absolute w-2 h-2 rounded-full -translate-x-1/2 -translate-y-1/2 ${
                   n.role.includes('Guarda') ? 'bg-red-400' : 'bg-yellow-300'
                 }`}
                 style={{
@@ -1123,14 +1119,14 @@ export const ThirdPersonCanvas: React.FC<ThirdPersonCanvasProps> = ({
 
       {/* On-Screen Touch D-Pad / Mobile Virtual Controls */}
       <div className="absolute bottom-4 left-4 z-30 flex items-center gap-2 select-none">
-        <div className="grid grid-cols-3 gap-1 bg-stone-950/85 p-2 rounded-2xl border border-stone-800 backdrop-blur shadow-2xl">
+        <div className="grid grid-cols-3 gap-1 bg-stone-900/90 p-2 rounded-2xl border-2 border-amber-600/60 backdrop-blur shadow-2xl">
           <div />
           <button
             onMouseDown={() => handleTouchDir(0, -1)}
             onMouseUp={handleTouchStop}
             onTouchStart={() => handleTouchDir(0, -1)}
             onTouchEnd={handleTouchStop}
-            className="w-10 h-10 rounded-lg bg-stone-800 hover:bg-amber-900 active:bg-amber-600 text-stone-200 flex items-center justify-center font-bold"
+            className="w-10 h-10 rounded-lg bg-stone-800 hover:bg-amber-800 active:bg-amber-600 text-stone-200 flex items-center justify-center font-bold shadow"
           >
             <ArrowUp className="w-5 h-5" />
           </button>
@@ -1141,11 +1137,11 @@ export const ThirdPersonCanvas: React.FC<ThirdPersonCanvasProps> = ({
             onMouseUp={handleTouchStop}
             onTouchStart={() => handleTouchDir(-1, 0)}
             onTouchEnd={handleTouchStop}
-            className="w-10 h-10 rounded-lg bg-stone-800 hover:bg-amber-900 active:bg-amber-600 text-stone-200 flex items-center justify-center font-bold"
+            className="w-10 h-10 rounded-lg bg-stone-800 hover:bg-amber-800 active:bg-amber-600 text-stone-200 flex items-center justify-center font-bold shadow"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
-          <div className="w-10 h-10 rounded-lg bg-stone-900/60 flex items-center justify-center text-[10px] font-mono text-stone-400">
+          <div className="w-10 h-10 rounded-lg bg-stone-950 flex items-center justify-center text-[10px] font-mono text-amber-400 font-bold">
             WASD
           </div>
           <button
@@ -1153,7 +1149,7 @@ export const ThirdPersonCanvas: React.FC<ThirdPersonCanvasProps> = ({
             onMouseUp={handleTouchStop}
             onTouchStart={() => handleTouchDir(1, 0)}
             onTouchEnd={handleTouchStop}
-            className="w-10 h-10 rounded-lg bg-stone-800 hover:bg-amber-900 active:bg-amber-600 text-stone-200 flex items-center justify-center font-bold"
+            className="w-10 h-10 rounded-lg bg-stone-800 hover:bg-amber-800 active:bg-amber-600 text-stone-200 flex items-center justify-center font-bold shadow"
           >
             <ArrowRight className="w-5 h-5" />
           </button>
@@ -1164,7 +1160,7 @@ export const ThirdPersonCanvas: React.FC<ThirdPersonCanvasProps> = ({
             onMouseUp={handleTouchStop}
             onTouchStart={() => handleTouchDir(0, 1)}
             onTouchEnd={handleTouchStop}
-            className="w-10 h-10 rounded-lg bg-stone-800 hover:bg-amber-900 active:bg-amber-600 text-stone-200 flex items-center justify-center font-bold"
+            className="w-10 h-10 rounded-lg bg-stone-800 hover:bg-amber-800 active:bg-amber-600 text-stone-200 flex items-center justify-center font-bold shadow"
           >
             <ArrowDown className="w-5 h-5" />
           </button>
@@ -1175,7 +1171,7 @@ export const ThirdPersonCanvas: React.FC<ThirdPersonCanvasProps> = ({
         {nearestInteractable && (
           <button
             onClick={triggerNearestInteraction}
-            className="h-20 px-5 rounded-2xl bg-gradient-to-br from-amber-600 via-amber-700 to-amber-900 text-amber-100 font-serif font-bold text-sm border-2 border-amber-300 shadow-2xl flex flex-col items-center justify-center gap-1 active:scale-95 animate-pulse"
+            className="h-20 px-5 rounded-2xl bg-gradient-to-br from-amber-500 via-amber-600 to-amber-800 text-stone-950 font-serif font-black text-sm border-2 border-amber-200 shadow-2xl flex flex-col items-center justify-center gap-1 active:scale-95 animate-pulse"
           >
             <Hand className="w-6 h-6" />
             <span>INTERAGIR [E]</span>
@@ -1184,7 +1180,7 @@ export const ThirdPersonCanvas: React.FC<ThirdPersonCanvasProps> = ({
       </div>
 
       {/* Controls Legend (Bottom Right) */}
-      <div className="absolute bottom-3 right-3 z-20 hidden md:flex items-center gap-2 bg-stone-950/90 backdrop-blur px-3 py-1.5 rounded-lg border border-amber-900/50 text-[11px] font-serif text-stone-300 shadow-xl">
+      <div className="absolute bottom-3 right-3 z-20 hidden md:flex items-center gap-2 bg-stone-900/90 backdrop-blur px-3 py-1.5 rounded-lg border border-amber-600/50 text-[11px] font-serif text-stone-200 shadow-xl">
         <span><kbd className="bg-stone-800 px-1.5 py-0.5 rounded text-amber-300">W,A,S,D</kbd> Mover</span>
         <span>•</span>
         <span><kbd className="bg-stone-800 px-1.5 py-0.5 rounded text-amber-300">SHIFT</kbd> Furtividade</span>
@@ -1196,9 +1192,8 @@ export const ThirdPersonCanvas: React.FC<ThirdPersonCanvasProps> = ({
 
       {/* DIALOGUE MODAL OVERLAY */}
       {activeDialogue && (
-        <div className="absolute bottom-4 left-4 right-4 z-50 bg-stonebg-950/95 border-2 border-amber-500 rounded-2xl p-5 shadow-2xl backdrop-blur-md animate-fade-in space-y-3">
+        <div className="absolute bottom-4 left-4 right-4 z-50 bg-stone-900/98 border-2 border-amber-500 rounded-2xl p-5 shadow-2xl backdrop-blur-md animate-fade-in space-y-3">
           
-          {/* Speaker Header */}
           <div className="flex items-center justify-between border-b border-amber-900/60 pb-2">
             <div className="flex items-center gap-2.5">
               <div
@@ -1225,18 +1220,16 @@ export const ThirdPersonCanvas: React.FC<ThirdPersonCanvasProps> = ({
             </button>
           </div>
 
-          {/* Dialogue Text */}
-          <p className="font-serif text-base text-stone-100 leading-relaxed italic bg-stone-900/80 p-3.5 rounded-lg border border-stone-800">
+          <p className="font-serif text-base text-stone-100 leading-relaxed italic bg-stone-950 p-3.5 rounded-lg border border-stone-800">
             "{activeDialogue.text}"
           </p>
 
-          {/* Choices Options */}
           <div className="space-y-2 pt-1">
             {activeDialogue.options.map((opt, idx) => (
               <button
                 key={idx}
                 onClick={() => handleSelectDialogueOption(opt)}
-                className="w-full text-left p-3 rounded-xl bg-stone-900 hover:bg-amber-950 border border-stone-800 hover:border-amber-400 text-amber-100 text-xs font-serif transition flex flex-col gap-0.5 group shadow"
+                className="w-full text-left p-3 rounded-xl bg-stone-950 hover:bg-amber-950 border border-stone-800 hover:border-amber-400 text-amber-100 text-xs font-serif transition flex flex-col gap-0.5 group shadow"
               >
                 <span className="font-bold text-amber-300 group-hover:text-amber-200">
                   {opt.label}
