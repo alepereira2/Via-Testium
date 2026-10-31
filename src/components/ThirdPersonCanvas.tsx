@@ -20,7 +20,8 @@ import {
   ArrowRight,
   Hand,
   Sun,
-  Moon
+  Shield,
+  Eye
 } from 'lucide-react';
 
 interface ThirdPersonCanvasProps {
@@ -65,9 +66,8 @@ export const ThirdPersonCanvas: React.FC<ThirdPersonCanvasProps> = ({
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   
-  // Brightness Control: 'daylight' (padrão absoluto: 100% claro, sem nenhuma opacidade escura), 'torchlit' (noite clara e dourada)
+  // Lighting Mode: 'daylight' (100% claro), 'torchlit'
   const [lightingMode, setLightingMode] = useState<'daylight' | 'torchlit'>('daylight');
-  const [brightnessLevel, setBrightnessLevel] = useState<number>(100); // 50% to 150%
 
   // Player State
   const [player, setPlayer] = useState<{
@@ -99,6 +99,7 @@ export const ThirdPersonCanvas: React.FC<ThirdPersonCanvasProps> = ({
   } | null>(null);
   const [showFullMap, setShowFullMap] = useState<boolean>(false);
   const [flameFlicker, setFlameFlicker] = useState<number>(1.0);
+  const [isMobileSneakActive, setIsMobileSneakActive] = useState<boolean>(false);
 
   // Rising Embers Particles
   const embersRef = useRef<EmberParticle[]>([]);
@@ -112,13 +113,11 @@ export const ThirdPersonCanvas: React.FC<ThirdPersonCanvasProps> = ({
     const handleKeyDown = (e: KeyboardEvent) => {
       keysPressed.current[e.code] = true;
 
-      // Handle interaction key
       if ((e.code === 'KeyE' || e.code === 'Space') && !activeDialogue) {
         e.preventDefault();
         triggerNearestInteraction();
       }
 
-      // Handle Map toggle
       if (e.code === 'KeyM') {
         setShowFullMap((prev) => !prev);
       }
@@ -246,7 +245,7 @@ export const ThirdPersonCanvas: React.FC<ThirdPersonCanvasProps> = ({
         }
       }
 
-      const isSneaking = !!(keysPressed.current['ShiftLeft'] || keysPressed.current['ShiftRight']);
+      const isSneaking = !!(keysPressed.current['ShiftLeft'] || keysPressed.current['ShiftRight'] || isMobileSneakActive);
       const currentSpeed = isSneaking ? 2.0 : 3.6;
 
       let isMoving = false;
@@ -322,7 +321,7 @@ export const ThirdPersonCanvas: React.FC<ThirdPersonCanvasProps> = ({
           minDistance = dist;
           closestInteractable = {
             name: npc.name,
-            actionPrompt: `Falar com ${npc.name} [E]`,
+            actionPrompt: `Falar com ${npc.name}`,
             entity: npc,
           };
         }
@@ -342,7 +341,7 @@ export const ThirdPersonCanvas: React.FC<ThirdPersonCanvasProps> = ({
           minDistance = dist;
           closestInteractable = {
             name: 'Braseiro de Carvão',
-            actionPrompt: 'Aquecer as mãos no braseiro [E]',
+            actionPrompt: 'Aquecer as mãos',
             entity: null,
           };
         }
@@ -357,7 +356,7 @@ export const ThirdPersonCanvas: React.FC<ThirdPersonCanvasProps> = ({
           minDistance = dist;
           closestInteractable = {
             name: 'Portão de Saída',
-            actionPrompt: 'Sair para o sepulcro [E]',
+            actionPrompt: 'Sair para o sepulcro',
             entity: null,
           };
         }
@@ -373,7 +372,7 @@ export const ThirdPersonCanvas: React.FC<ThirdPersonCanvasProps> = ({
 
     animationFrameId = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(animationFrameId);
-  }, [player, npcs, activeDialogue, worldData, lightingMode, brightnessLevel]);
+  }, [player, npcs, activeDialogue, worldData, lightingMode, isMobileSneakActive]);
 
   // Circle vs Rect Collision
   const checkCollision = (cx: number, cy: number, cradius: number): boolean => {
@@ -410,7 +409,7 @@ export const ThirdPersonCanvas: React.FC<ThirdPersonCanvasProps> = ({
     return false;
   };
 
-  // Rendering Function: 100% Crisp, Bright, High-Contrast & Catholic Iconography
+  // Rendering Scene
   const renderScene = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -433,16 +432,9 @@ export const ThirdPersonCanvas: React.FC<ThirdPersonCanvasProps> = ({
 
     ctx.save();
     ctx.clearRect(0, 0, viewportW, viewportH);
-
-    // Apply brightness filter if adjusted
-    if (brightnessLevel !== 100) {
-      ctx.filter = `brightness(${brightnessLevel}%)`;
-    }
-
     ctx.translate(-camX, -camY);
 
-    // 1. Draw Courtyard Floor: BRIGHT Warm Jerusalem Sandstone (Pedra de Jerusalém Dourada e Areia Clara)
-    // NEVER dark or muddy! Pure bright Mediterranean limestone flagstones.
+    // 1. Draw Courtyard Floor: BRIGHT Warm Jerusalem Sandstone
     const isDaylight = lightingMode === 'daylight';
     const baseStone = isDaylight ? '#e8dcbf' : '#d4c7a5';
     const altStone = isDaylight ? '#f2e8cf' : '#decfae';
@@ -451,7 +443,6 @@ export const ThirdPersonCanvas: React.FC<ThirdPersonCanvasProps> = ({
     ctx.fillStyle = baseStone;
     ctx.fillRect(0, 0, worldData.width, worldData.height);
 
-    // Stone Tiles Grid with Crisp Clean Borders
     const tileSize = 60;
     for (let x = 0; x < worldData.width; x += tileSize) {
       for (let y = 0; y < worldData.height; y += tileSize) {
@@ -459,12 +450,10 @@ export const ThirdPersonCanvas: React.FC<ThirdPersonCanvasProps> = ({
         ctx.fillStyle = hash > 4 ? altStone : baseStone;
         ctx.fillRect(x + 1.5, y + 1.5, tileSize - 3, tileSize - 3);
 
-        // Crisp beveled border
         ctx.strokeStyle = mortarColor;
         ctx.lineWidth = 1.5;
         ctx.strokeRect(x, y, tileSize, tileSize);
 
-        // Light bevel highlight on top and left edge of tile
         ctx.strokeStyle = '#fff8e7';
         ctx.lineWidth = 1.0;
         ctx.beginPath();
@@ -475,13 +464,11 @@ export const ThirdPersonCanvas: React.FC<ThirdPersonCanvasProps> = ({
       }
     }
 
-    // 2. Draw Walls & Colonnades with Bright Golden-Sandstone Relief
+    // 2. Draw Walls & Colonnades
     worldData.walls.forEach((w) => {
-      // Wall Shadow on Ground
       ctx.fillStyle = 'rgba(70, 60, 45, 0.45)';
       ctx.fillRect(w.x + 8, w.y + 10, w.width, w.height);
 
-      // Chiseled Jerusalem Stone Wall Face (Warm Cream/Sand)
       const wallGrad = ctx.createLinearGradient(w.x, w.y, w.x, w.y + w.height);
       wallGrad.addColorStop(0, '#f5efe0');
       wallGrad.addColorStop(0.3, '#dfd3bc');
@@ -489,24 +476,21 @@ export const ThirdPersonCanvas: React.FC<ThirdPersonCanvasProps> = ({
       ctx.fillStyle = wallGrad;
       ctx.fillRect(w.x, w.y, w.width, w.height);
 
-      // High-contrast Wall Edge Trim & Cornice
       ctx.strokeStyle = '#6e5e47';
       ctx.lineWidth = 2.5;
       ctx.strokeRect(w.x, w.y, w.width, w.height);
     });
 
-    // Draw Classical White Marble Columns with Golden Capitals
+    // Columns
     [
       { x: 268, y: 338 }, { x: 468, y: 338 }, { x: 868, y: 338 }, { x: 1068, y: 338 },
       { x: 268, y: 638 }, { x: 468, y: 638 }, { x: 868, y: 638 }, { x: 1068, y: 638 }
     ].forEach((col) => {
-      // Column Shadow
       ctx.fillStyle = 'rgba(70, 60, 45, 0.4)';
       ctx.beginPath();
       ctx.ellipse(col.x + 8, col.y + 12, 24, 14, 0, 0, Math.PI * 2);
       ctx.fill();
 
-      // White-Cream Marble Shaft
       const cGrad = ctx.createRadialGradient(col.x - 5, col.y - 5, 4, col.x, col.y, 22);
       cGrad.addColorStop(0, '#ffffff');
       cGrad.addColorStop(0.6, '#f3ece0');
@@ -519,26 +503,23 @@ export const ThirdPersonCanvas: React.FC<ThirdPersonCanvasProps> = ({
       ctx.lineWidth = 2.5;
       ctx.stroke();
 
-      // Golden Corinthian Capital Ring
       ctx.fillStyle = '#f59e0b';
       ctx.beginPath();
       ctx.arc(col.x, col.y, 8, 0, Math.PI * 2);
       ctx.fill();
     });
 
-    // 3. Draw Props (Brazier, Benches, Upper Loggia)
+    // 3. Draw Props
     worldData.props.forEach((prop) => {
       if (prop.type === 'brazier') {
         const cx = prop.x + prop.width / 2;
         const cy = prop.y + prop.height / 2;
 
-        // Tripod Shadow
         ctx.fillStyle = 'rgba(70, 60, 45, 0.45)';
         ctx.beginPath();
         ctx.ellipse(cx + 6, cy + 24, 36, 14, 0, 0, Math.PI * 2);
         ctx.fill();
 
-        // Bronze Brazier Bowl
         ctx.fillStyle = '#78350f';
         ctx.beginPath();
         ctx.arc(cx, cy, 28, 0, Math.PI * 2);
@@ -547,7 +528,6 @@ export const ThirdPersonCanvas: React.FC<ThirdPersonCanvasProps> = ({
         ctx.lineWidth = 3.5;
         ctx.stroke();
 
-        // Glowing Fiery Core
         const emberGrad = ctx.createRadialGradient(cx, cy, 4, cx, cy, 26);
         emberGrad.addColorStop(0, '#ffffff');
         emberGrad.addColorStop(0.2, '#fef08a');
@@ -559,7 +539,6 @@ export const ThirdPersonCanvas: React.FC<ThirdPersonCanvasProps> = ({
         ctx.arc(cx, cy, 24, 0, Math.PI * 2);
         ctx.fill();
 
-        // Animated Flame Tongues
         ctx.fillStyle = '#fef08a';
         for (let i = 0; i < 4; i++) {
           const angle = (i * Math.PI) / 2 + flameFlicker * 0.5;
@@ -588,7 +567,7 @@ export const ThirdPersonCanvas: React.FC<ThirdPersonCanvasProps> = ({
       }
     });
 
-    // Rising Flame Embers Particles
+    // Embers
     embersRef.current.forEach((emb) => {
       ctx.fillStyle = `rgba(234, 88, 12, ${emb.alpha})`;
       ctx.beginPath();
@@ -596,7 +575,7 @@ export const ThirdPersonCanvas: React.FC<ThirdPersonCanvasProps> = ({
       ctx.fill();
     });
 
-    // 4. Draw NPCs with Catholic Iconography & Clear Dark Outlines
+    // 4. Draw NPCs
     npcs.forEach((npc) => {
       drawIconographicCharacter(
         ctx,
@@ -609,7 +588,6 @@ export const ThirdPersonCanvas: React.FC<ThirdPersonCanvasProps> = ({
         false
       );
 
-      // Speech Bark Bubble
       if (npc.barkText) {
         ctx.font = 'bold italic 11px Inter, sans-serif';
         ctx.fillStyle = '#854d0e';
@@ -618,7 +596,7 @@ export const ThirdPersonCanvas: React.FC<ThirdPersonCanvasProps> = ({
       }
     });
 
-    // 5. Draw Player Character (São Pedro with Catholic Iconography)
+    // 5. Draw Player Character
     drawIconographicCharacter(
       ctx,
       player.x,
@@ -631,14 +609,12 @@ export const ThirdPersonCanvas: React.FC<ThirdPersonCanvasProps> = ({
       player.walkCycle
     );
 
-    // 6. Optional Lighting Overlay (Zero opacity in 'daylight' mode = 100% visibility!)
+    // 6. Optional Lighting Overlay
     if (lightingMode === 'torchlit') {
       ctx.save();
-      // Very gentle warm golden evening tint, NEVER opaque dark mud!
       ctx.fillStyle = 'rgba(120, 80, 40, 0.12)';
       ctx.fillRect(0, 0, worldData.width, worldData.height);
 
-      // Warm radial fires
       const brazier = worldData.props.find((p) => p.id === 'brazier_central');
       if (brazier && brazier.lightRadius) {
         const radius = brazier.lightRadius * flameFlicker;
@@ -696,7 +672,7 @@ export const ThirdPersonCanvas: React.FC<ThirdPersonCanvasProps> = ({
     ctx.restore();
   };
 
-  // Helper: Draw Character with Authentic Catholic Iconography
+  // Helper: Draw Character
   const drawIconographicCharacter = (
     ctx: CanvasRenderingContext2D,
     x: number,
@@ -710,7 +686,6 @@ export const ThirdPersonCanvas: React.FC<ThirdPersonCanvasProps> = ({
   ) => {
     ctx.save();
 
-    // 1. Drop Shadow on Ground
     ctx.fillStyle = 'rgba(70, 60, 45, 0.45)';
     ctx.beginPath();
     ctx.ellipse(x, y + 18, 22, 10, 0, 0, Math.PI * 2);
@@ -718,9 +693,8 @@ export const ThirdPersonCanvas: React.FC<ThirdPersonCanvasProps> = ({
 
     const legOffset = isMoving ? Math.sin(walkCycle) * 8 : 0;
 
-    // 2. Catholic Iconographic Halos (Nimbo Sagrado)
+    // Halos
     if (iconography === 'peter' || iconography === 'paul') {
-      // Golden Halo of the Apostle
       const haloGrad = ctx.createRadialGradient(x, y - 24, 10, x, y - 24, 30);
       haloGrad.addColorStop(0, '#fef08a');
       haloGrad.addColorStop(0.7, '#eab308');
@@ -733,7 +707,6 @@ export const ThirdPersonCanvas: React.FC<ThirdPersonCanvasProps> = ({
       ctx.lineWidth = 2;
       ctx.stroke();
     } else if (iconography === 'christ') {
-      // CRUCIFORM HALO OF CHRIST (NIMBO CRUCIFORME)
       const cHaloGrad = ctx.createRadialGradient(x, y - 24, 10, x, y - 24, 34);
       cHaloGrad.addColorStop(0, '#ffffff');
       cHaloGrad.addColorStop(0.6, '#facc15');
@@ -743,11 +716,8 @@ export const ThirdPersonCanvas: React.FC<ThirdPersonCanvasProps> = ({
       ctx.arc(x, y - 24, 34, 0, Math.PI * 2);
       ctx.fill();
 
-      // Red Greek Cross inside the Nimbus
       ctx.fillStyle = '#dc2626';
-      // Vertical bar
       ctx.fillRect(x - 3.5, y - 56, 7, 32);
-      // Horizontal bar
       ctx.fillRect(x - 20, y - 27.5, 40, 7);
 
       ctx.strokeStyle = '#fef08a';
@@ -757,15 +727,14 @@ export const ThirdPersonCanvas: React.FC<ThirdPersonCanvasProps> = ({
       ctx.stroke();
     }
 
-    // 3. Sandals & Legs
-    ctx.fillStyle = '#451a03'; // Leather sandals
+    // Sandals
+    ctx.fillStyle = '#451a03';
     ctx.fillRect(x - 10, y + 14 + legOffset, 8, 9);
     ctx.fillRect(x + 2, y + 14 - legOffset, 8, 9);
 
-    // 4. Robes and Mantle by Iconographic Type
+    // Robes
     if (iconography === 'peter') {
-      // SÃO PEDRO: Cobalt Blue Tunic + Golden Ochre Mantle (Tradição Católica)
-      ctx.fillStyle = '#1d4ed8'; // Vibrant Blue tunic
+      ctx.fillStyle = '#1d4ed8';
       ctx.beginPath();
       ctx.roundRect(x - 16, y - 14, 32, 30, 7);
       ctx.fill();
@@ -773,7 +742,6 @@ export const ThirdPersonCanvas: React.FC<ThirdPersonCanvasProps> = ({
       ctx.lineWidth = 2;
       ctx.stroke();
 
-      // Golden Yellow Mantle draped over shoulder
       ctx.fillStyle = '#eab308';
       ctx.beginPath();
       ctx.moveTo(x - 16, y - 14);
@@ -786,7 +754,7 @@ export const ThirdPersonCanvas: React.FC<ThirdPersonCanvasProps> = ({
       ctx.lineWidth = 1.5;
       ctx.stroke();
 
-      // Golden & Silver Keys of St. Peter (Duae Claves Regni) at hip
+      // Keys of St. Peter
       ctx.strokeStyle = '#facc15';
       ctx.lineWidth = 2.5;
       ctx.beginPath();
@@ -797,7 +765,6 @@ export const ThirdPersonCanvas: React.FC<ThirdPersonCanvasProps> = ({
       ctx.lineTo(x + 19, y + 16);
       ctx.stroke();
     } else if (iconography === 'christ') {
-      // JESUS CRISTO: Seamless Pure White Tunic + Crimson Mantle
       ctx.fillStyle = '#ffffff';
       ctx.beginPath();
       ctx.roundRect(x - 16, y - 14, 32, 30, 7);
@@ -806,7 +773,6 @@ export const ThirdPersonCanvas: React.FC<ThirdPersonCanvasProps> = ({
       ctx.lineWidth = 2;
       ctx.stroke();
 
-      // Sacred Crimson Red Mantle
       ctx.fillStyle = '#b91c1c';
       ctx.beginPath();
       ctx.arc(x - 7, y, 16, 0, Math.PI * 2);
@@ -815,7 +781,6 @@ export const ThirdPersonCanvas: React.FC<ThirdPersonCanvasProps> = ({
       ctx.lineWidth = 1.5;
       ctx.stroke();
 
-      // Bound wrists with rope
       ctx.strokeStyle = '#b45309';
       ctx.lineWidth = 3.5;
       ctx.beginPath();
@@ -823,7 +788,6 @@ export const ThirdPersonCanvas: React.FC<ThirdPersonCanvasProps> = ({
       ctx.lineTo(x + 8, y + 8);
       ctx.stroke();
     } else if (iconography === 'malchus_kin') {
-      // PARENTE DE MALCO: Dark Levantine Tunic + Bandaged Right Ear
       ctx.fillStyle = '#5c2c16';
       ctx.beginPath();
       ctx.roundRect(x - 15, y - 14, 30, 30, 6);
@@ -832,18 +796,15 @@ export const ThirdPersonCanvas: React.FC<ThirdPersonCanvasProps> = ({
       ctx.lineWidth = 2;
       ctx.stroke();
     } else if (iconography === 'roman_soldier') {
-      // ROMAN LEGIONNAIRE: Imperial Red Tunic + Lorica Segmentata
-      ctx.fillStyle = '#b91c1c'; // Red tunic
+      ctx.fillStyle = '#b91c1c';
       ctx.fillRect(x - 16, y - 12, 32, 28);
 
-      // Silver Segmented Plate Armor (Lorica)
       ctx.fillStyle = '#cbd5e1';
       ctx.fillRect(x - 14, y - 10, 28, 20);
       ctx.strokeStyle = '#475569';
       ctx.lineWidth = 2;
       ctx.strokeRect(x - 14, y - 10, 28, 20);
     } else if (iconography === 'temple_guard') {
-      // LEVITICAL TEMPLE GUARD: Blue & White Priestly Stripes
       ctx.fillStyle = '#1e3a8a';
       ctx.fillRect(x - 15, y - 12, 30, 28);
       ctx.fillStyle = '#ffffff';
@@ -852,7 +813,6 @@ export const ThirdPersonCanvas: React.FC<ThirdPersonCanvasProps> = ({
       ctx.lineWidth = 2;
       ctx.strokeRect(x - 15, y - 12, 30, 28);
     } else if (iconography === 'servant_girl') {
-      // MAIDSERVANT: Terracotta Dress + Modest Veil
       ctx.fillStyle = '#c2410c';
       ctx.beginPath();
       ctx.roundRect(x - 14, y - 12, 28, 28, 7);
@@ -870,7 +830,7 @@ export const ThirdPersonCanvas: React.FC<ThirdPersonCanvasProps> = ({
       ctx.stroke();
     }
 
-    // 5. Head & Facial Features by Iconography
+    // Head
     const skinTone = iconography === 'christ' ? '#fde8cd' : '#f0c8a0';
     ctx.fillStyle = skinTone;
     ctx.beginPath();
@@ -880,50 +840,41 @@ export const ThirdPersonCanvas: React.FC<ThirdPersonCanvasProps> = ({
     ctx.lineWidth = 1.5;
     ctx.stroke();
 
-    // Specific Hair, Beard and Headwear
     if (iconography === 'peter') {
-      // St. Peter: Short curly silver-white hair and rounded grey beard with tonsure
-      ctx.fillStyle = '#e2e8f0'; // White / silver hair
+      ctx.fillStyle = '#e2e8f0';
       ctx.beginPath();
       ctx.arc(x, y - 22, 15, Math.PI, Math.PI * 2);
       ctx.fill();
-      // Round curly white beard
       ctx.beginPath();
       ctx.arc(x, y - 16, 14, 0, Math.PI);
       ctx.fill();
     } else if (iconography === 'christ') {
-      // Jesus: Long wavy chestnut-brown hair parted in the middle falling to shoulders
       ctx.fillStyle = '#5c2c16';
       ctx.fillRect(x - 16, y - 26, 7, 24);
       ctx.fillRect(x + 9, y - 26, 7, 24);
-      // Trimmed chestnut beard
       ctx.beginPath();
       ctx.arc(x, y - 15, 13, 0, Math.PI);
       ctx.fill();
     } else if (iconography === 'malchus_kin') {
-      // Dark beard
       ctx.fillStyle = '#1c1917';
       ctx.beginPath();
       ctx.arc(x, y - 16, 14, 0, Math.PI);
       ctx.fill();
 
-      // BANDAGED RIGHT EAR (ICONIC DETAIL OF MALCHUS' EAR STRUCK IN GETHSEMANE!)
-      ctx.fillStyle = '#ffffff'; // White linen bandage wrap
+      // Bandaged Ear
+      ctx.fillStyle = '#ffffff';
       ctx.fillRect(x + 9, y - 22, 7, 12);
-      ctx.strokeStyle = '#b91c1c'; // Bloodstain
+      ctx.strokeStyle = '#b91c1c';
       ctx.lineWidth = 2;
       ctx.strokeRect(x + 10, y - 19, 4, 6);
     } else if (iconography === 'roman_soldier') {
-      // Roman Brass Helmet (Galea) with Red Horsehair Crest
       ctx.fillStyle = '#d97706';
       ctx.beginPath();
       ctx.arc(x, y - 20, 15, Math.PI, Math.PI * 2);
       ctx.fill();
-      // Red Imperial Crest
       ctx.fillStyle = '#dc2626';
       ctx.fillRect(x - 4, y - 36, 8, 16);
     } else if (iconography === 'temple_guard') {
-      // Levitical White Turban (Migbahat)
       ctx.fillStyle = '#ffffff';
       ctx.beginPath();
       ctx.ellipse(x, y - 24, 15, 9, 0, 0, Math.PI * 2);
@@ -932,7 +883,6 @@ export const ThirdPersonCanvas: React.FC<ThirdPersonCanvasProps> = ({
       ctx.lineWidth = 2;
       ctx.stroke();
     } else if (iconography === 'servant_girl') {
-      // Jewish Modesty Head-veil (Mitpachat)
       ctx.fillStyle = '#ffffff';
       ctx.beginPath();
       ctx.ellipse(x, y - 22, 15, 9, 0, 0, Math.PI * 2);
@@ -955,7 +905,7 @@ export const ThirdPersonCanvas: React.FC<ThirdPersonCanvasProps> = ({
       ctx.fillRect(x + 2 + eyeOffsetX, y - 20 + eyeOffsetY, 3.5, 3.5);
     }
 
-    // Spear for Guards
+    // Spear
     if (iconography === 'temple_guard' || iconography === 'roman_soldier') {
       ctx.strokeStyle = '#b45309';
       ctx.lineWidth = 3;
@@ -964,7 +914,6 @@ export const ThirdPersonCanvas: React.FC<ThirdPersonCanvasProps> = ({
       ctx.lineTo(x + 18, y - 44);
       ctx.stroke();
 
-      // Spear tip
       ctx.fillStyle = '#f1f5f9';
       ctx.beginPath();
       ctx.moveTo(x + 18, y - 56);
@@ -977,7 +926,7 @@ export const ThirdPersonCanvas: React.FC<ThirdPersonCanvasProps> = ({
       ctx.stroke();
     }
 
-    // 6. Overhead Name Label with Solid High-Contrast Badge
+    // Overhead Label
     ctx.font = 'bold 12px Cinzel, serif';
     const textWidth = ctx.measureText(name).width;
 
@@ -995,78 +944,67 @@ export const ThirdPersonCanvas: React.FC<ThirdPersonCanvasProps> = ({
     ctx.restore();
   };
 
-  // Virtual Touch Direction Handlers
-  const handleTouchDir = (dx: number, dy: number) => {
+  // Virtual Touch Direction Handlers with preventDefault
+  const handleTouchDir = (e: React.TouchEvent | React.MouseEvent, dx: number, dy: number) => {
+    e.preventDefault();
     touchMovement.current = { x: dx, y: dy };
   };
 
-  const handleTouchStop = () => {
+  const handleTouchStop = (e: React.TouchEvent | React.MouseEvent) => {
+    e.preventDefault();
     touchMovement.current = { x: 0, y: 0 };
   };
 
   return (
-    <div className="relative w-full rounded-2xl overflow-hidden border-2 border-amber-500 shadow-2xl bg-stone-900 select-none">
+    <div className="relative w-full rounded-2xl overflow-hidden border-2 border-amber-500 shadow-2xl bg-stone-900 select-none touch-none">
       
-      {/* Top HUD Overlay */}
-      <div className="absolute top-3 left-3 right-3 z-30 flex items-center justify-between pointer-events-none">
+      {/* Top HUD Overlay (Responsive for Mobile Phones) */}
+      <div className="absolute top-2 left-2 right-2 z-30 flex items-center justify-between pointer-events-none gap-1.5">
         
         {/* Location & Year Badge */}
-        <div className="bg-stone-900/95 backdrop-blur border-2 border-amber-600/70 rounded-xl px-4 py-2 pointer-events-auto flex items-center gap-3 shadow-xl">
-          <MapPin className="w-4 h-4 text-amber-400" />
-          <div>
-            <h4 className="font-serif font-bold text-xs text-amber-100 tracking-wider">
+        <div className="bg-stone-900/95 backdrop-blur border-2 border-amber-600/70 rounded-xl px-2.5 py-1.5 pointer-events-auto flex items-center gap-2 shadow-xl max-w-[50%]">
+          <MapPin className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
+          <div className="truncate">
+            <h4 className="font-serif font-bold text-[11px] md:text-xs text-amber-100 tracking-wider truncate">
               {worldData.name}
             </h4>
-            <p className="text-[10px] text-stone-300 font-serif">
-              {worldData.region} • {worldData.year}
+            <p className="text-[9px] md:text-[10px] text-stone-300 font-serif truncate">
+              {worldData.region}
             </p>
           </div>
         </div>
 
-        {/* Center: Heartbeat & Instant Lighting Mode Toggle */}
-        <div className="flex items-center gap-2 pointer-events-auto">
-          {/* Heartbeat & Tension Indicator */}
-          <div className="bg-stone-900/95 backdrop-blur border border-red-700 rounded-xl px-3.5 py-1.5 flex items-center gap-2.5 shadow-xl">
-            <Heart className="w-4 h-4 text-red-500 fill-current animate-ping" />
-            <div className="flex flex-col">
-              <span className="text-[9px] font-serif text-stone-400 uppercase">Tensão Cardíaca</span>
-              <span className="font-mono font-bold text-red-300 text-xs">{Math.round(tensionBpm)} BPM</span>
-            </div>
+        {/* Center: Heartbeat & Light Toggle */}
+        <div className="flex items-center gap-1.5 pointer-events-auto">
+          {/* Heartbeat Badge */}
+          <div className="bg-stone-900/95 backdrop-blur border border-red-700 rounded-xl px-2.5 py-1 flex items-center gap-1.5 shadow-xl">
+            <Heart className="w-3.5 h-3.5 text-red-500 fill-current animate-ping" />
+            <span className="font-mono font-bold text-red-300 text-[11px] md:text-xs">
+              {Math.round(tensionBpm)}
+            </span>
           </div>
 
-          {/* Daylight / Full Visibility Button */}
+          {/* Quick Light Toggle Button */}
           <button
             onClick={() => setLightingMode((prev) => (prev === 'daylight' ? 'torchlit' : 'daylight'))}
-            className={`px-3 py-2 rounded-xl text-xs font-serif font-bold flex items-center gap-1.5 shadow-xl border-2 transition ${
-              lightingMode === 'daylight'
-                ? 'bg-amber-500 text-stone-950 border-amber-300'
-                : 'bg-stone-900 text-amber-200 border-amber-600/70 hover:border-amber-400'
-            }`}
-            title="Alternar Iluminação: Luz Plena ou Noite Iluminada"
+            className="bg-amber-500 text-stone-950 border-2 border-amber-300 rounded-xl p-1.5 md:px-2.5 md:py-1 text-xs font-serif font-bold flex items-center gap-1 shadow-lg active:scale-95"
+            title="Alternar Iluminação"
           >
-            <Sun className="w-4 h-4 fill-current" />
-            <span>{lightingMode === 'daylight' ? 'Luz Plena (100% Claro)' : 'Noite Iluminada'}</span>
+            <Sun className="w-3.5 h-3.5 fill-current" />
+            <span className="hidden md:inline">Luz Plena</span>
           </button>
         </div>
 
         {/* Mini-Map Radar (Top Right) */}
         <div
           onClick={() => setShowFullMap(true)}
-          className="bg-stone-900/95 backdrop-blur border-2 border-amber-500 rounded-xl p-2 pointer-events-auto cursor-pointer hover:border-amber-300 shadow-2xl transition group"
-          title="Clique para abrir a Planta Completa [M]"
+          className="bg-stone-900/95 backdrop-blur border-2 border-amber-500 rounded-xl p-1 pointer-events-auto cursor-pointer hover:border-amber-300 shadow-2xl transition group flex-shrink-0"
+          title="Abrir Planta Completa [M]"
         >
-          <div className="flex items-center justify-between text-[10px] font-serif text-amber-400 mb-1 px-1">
-            <span className="flex items-center gap-1">
-              <Compass className="w-3 h-3 text-amber-400" /> Radar
-            </span>
-            <Maximize2 className="w-3 h-3 text-stone-300 group-hover:text-amber-300" />
-          </div>
-
-          {/* Canvas Radar Graphic */}
-          <div className="relative w-28 h-20 bg-stone-950 rounded border border-stone-800 overflow-hidden">
+          <div className="relative w-20 h-14 md:w-24 md:h-16 bg-stone-950 rounded border border-stone-800 overflow-hidden">
             {/* Player Blip */}
             <div
-              className="absolute w-3 h-3 rounded-full bg-cyan-400 ring-2 ring-white -translate-x-1/2 -translate-y-1/2"
+              className="absolute w-2.5 h-2.5 rounded-full bg-cyan-400 ring-2 ring-white -translate-x-1/2 -translate-y-1/2"
               style={{
                 left: `${(player.x / worldData.width) * 100}%`,
                 top: `${(player.y / worldData.height) * 100}%`,
@@ -1075,19 +1013,19 @@ export const ThirdPersonCanvas: React.FC<ThirdPersonCanvasProps> = ({
 
             {/* Brazier Blip */}
             <div
-              className="absolute w-2.5 h-2.5 rounded-full bg-orange-500 animate-pulse -translate-x-1/2 -translate-y-1/2"
+              className="absolute w-2 h-2 rounded-full bg-orange-500 animate-pulse -translate-x-1/2 -translate-y-1/2"
               style={{ left: '46%', top: '50%' }}
             />
 
             {/* Christ Blip */}
             <div
-              className="absolute w-2.5 h-2.5 rounded-full bg-yellow-300 -translate-x-1/2 -translate-y-1/2"
+              className="absolute w-2 h-2 rounded-full bg-yellow-300 -translate-x-1/2 -translate-y-1/2"
               style={{ left: '49%', top: '8%' }}
             />
 
             {/* Exit Gate Blip */}
             <div
-              className="absolute w-4 h-2 bg-amber-400 -translate-x-1/2"
+              className="absolute w-3 h-1.5 bg-amber-400 -translate-x-1/2"
               style={{ left: '42%', top: '90%' }}
             />
 
@@ -1095,7 +1033,7 @@ export const ThirdPersonCanvas: React.FC<ThirdPersonCanvasProps> = ({
             {npcs.map((n) => (
               <div
                 key={n.id}
-                className={`absolute w-2 h-2 rounded-full -translate-x-1/2 -translate-y-1/2 ${
+                className={`absolute w-1.5 h-1.5 rounded-full -translate-x-1/2 -translate-y-1/2 ${
                   n.role.includes('Guarda') ? 'bg-red-400' : 'bg-yellow-300'
                 }`}
                 style={{
@@ -1109,95 +1047,120 @@ export const ThirdPersonCanvas: React.FC<ThirdPersonCanvasProps> = ({
 
       </div>
 
-      {/* Main Third-Person Render Canvas */}
+      {/* Main Third-Person Render Canvas with Mobile Height */}
       <canvas
         ref={canvasRef}
         width={960}
         height={540}
-        className="w-full h-[540px] md:h-[580px] object-cover block cursor-crosshair"
+        className="w-full h-[52vh] sm:h-[58vh] md:h-[560px] object-cover block cursor-crosshair touch-none"
       />
 
-      {/* On-Screen Touch D-Pad / Mobile Virtual Controls */}
-      <div className="absolute bottom-4 left-4 z-30 flex items-center gap-2 select-none">
-        <div className="grid grid-cols-3 gap-1 bg-stone-900/90 p-2 rounded-2xl border-2 border-amber-600/60 backdrop-blur shadow-2xl">
+      {/* DUAL-THUMB MOBILE CONTROLS (Ergonomia Completa para Celular) */}
+      
+      {/* 1. LEFT THUMB: Virtual D-Pad for Directional Movement */}
+      <div className="absolute bottom-3 left-3 z-30 select-none touch-none">
+        <div className="grid grid-cols-3 gap-1 bg-stone-950/90 p-2 rounded-2xl border-2 border-amber-600/70 backdrop-blur shadow-2xl">
           <div />
           <button
-            onMouseDown={() => handleTouchDir(0, -1)}
+            onMouseDown={(e) => handleTouchDir(e, 0, -1)}
             onMouseUp={handleTouchStop}
-            onTouchStart={() => handleTouchDir(0, -1)}
+            onTouchStart={(e) => handleTouchDir(e, 0, -1)}
             onTouchEnd={handleTouchStop}
-            className="w-10 h-10 rounded-lg bg-stone-800 hover:bg-amber-800 active:bg-amber-600 text-stone-200 flex items-center justify-center font-bold shadow"
+            className="w-12 h-12 rounded-xl bg-stone-800 hover:bg-amber-800 active:bg-amber-500 text-stone-100 flex items-center justify-center font-bold shadow-lg border border-stone-700 active:scale-95"
           >
-            <ArrowUp className="w-5 h-5" />
+            <ArrowUp className="w-6 h-6" />
           </button>
           <div />
 
           <button
-            onMouseDown={() => handleTouchDir(-1, 0)}
+            onMouseDown={(e) => handleTouchDir(e, -1, 0)}
             onMouseUp={handleTouchStop}
-            onTouchStart={() => handleTouchDir(-1, 0)}
+            onTouchStart={(e) => handleTouchDir(e, -1, 0)}
             onTouchEnd={handleTouchStop}
-            className="w-10 h-10 rounded-lg bg-stone-800 hover:bg-amber-800 active:bg-amber-600 text-stone-200 flex items-center justify-center font-bold shadow"
+            className="w-12 h-12 rounded-xl bg-stone-800 hover:bg-amber-800 active:bg-amber-500 text-stone-100 flex items-center justify-center font-bold shadow-lg border border-stone-700 active:scale-95"
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft className="w-6 h-6" />
           </button>
-          <div className="w-10 h-10 rounded-lg bg-stone-950 flex items-center justify-center text-[10px] font-mono text-amber-400 font-bold">
-            WASD
+          <div className="w-12 h-12 rounded-xl bg-stone-900 flex items-center justify-center text-[10px] font-mono text-amber-400 font-bold">
+            ANDAR
           </div>
           <button
-            onMouseDown={() => handleTouchDir(1, 0)}
+            onMouseDown={(e) => handleTouchDir(e, 1, 0)}
             onMouseUp={handleTouchStop}
-            onTouchStart={() => handleTouchDir(1, 0)}
+            onTouchStart={(e) => handleTouchDir(e, 1, 0)}
             onTouchEnd={handleTouchStop}
-            className="w-10 h-10 rounded-lg bg-stone-800 hover:bg-amber-800 active:bg-amber-600 text-stone-200 flex items-center justify-center font-bold shadow"
+            className="w-12 h-12 rounded-xl bg-stone-800 hover:bg-amber-800 active:bg-amber-500 text-stone-100 flex items-center justify-center font-bold shadow-lg border border-stone-700 active:scale-95"
           >
-            <ArrowRight className="w-5 h-5" />
+            <ArrowRight className="w-6 h-6" />
           </button>
 
           <div />
           <button
-            onMouseDown={() => handleTouchDir(0, 1)}
+            onMouseDown={(e) => handleTouchDir(e, 0, 1)}
             onMouseUp={handleTouchStop}
-            onTouchStart={() => handleTouchDir(0, 1)}
+            onTouchStart={(e) => handleTouchDir(e, 0, 1)}
             onTouchEnd={handleTouchStop}
-            className="w-10 h-10 rounded-lg bg-stone-800 hover:bg-amber-800 active:bg-amber-600 text-stone-200 flex items-center justify-center font-bold shadow"
+            className="w-12 h-12 rounded-xl bg-stone-800 hover:bg-amber-800 active:bg-amber-500 text-stone-100 flex items-center justify-center font-bold shadow-lg border border-stone-700 active:scale-95"
           >
-            <ArrowDown className="w-5 h-5" />
+            <ArrowDown className="w-6 h-6" />
           </button>
           <div />
         </div>
+      </div>
 
-        {/* Interact Action Button */}
-        {nearestInteractable && (
+      {/* 2. RIGHT THUMB: Big Action Button + Mobile Sneak Toggle */}
+      <div className="absolute bottom-3 right-3 z-30 flex flex-col items-end gap-2 select-none touch-none">
+        
+        {/* Sneak Mode Toggle Button */}
+        <button
+          onClick={() => setIsMobileSneakActive((prev) => !prev)}
+          className={`px-3 py-1.5 rounded-xl border text-[11px] font-serif font-bold flex items-center gap-1.5 shadow-xl transition active:scale-95 ${
+            isMobileSneakActive
+              ? 'bg-emerald-600 text-white border-emerald-300'
+              : 'bg-stone-900/90 text-stone-300 border-stone-700 hover:border-amber-400'
+          }`}
+        >
+          <Shield className="w-3.5 h-3.5" />
+          <span>{isMobileSneakActive ? 'Furtivo ATIVO' : 'Furtivo (Passo Lento)'}</span>
+        </button>
+
+        {/* Big Ergonomic Action Button (Touch Target) */}
+        {nearestInteractable ? (
           <button
             onClick={triggerNearestInteraction}
-            className="h-20 px-5 rounded-2xl bg-gradient-to-br from-amber-500 via-amber-600 to-amber-800 text-stone-950 font-serif font-black text-sm border-2 border-amber-200 shadow-2xl flex flex-col items-center justify-center gap-1 active:scale-95 animate-pulse"
+            className="h-16 px-6 rounded-2xl bg-gradient-to-br from-amber-400 via-amber-500 to-amber-700 text-stone-950 font-serif font-black text-sm border-2 border-white shadow-2xl flex items-center justify-center gap-2 active:scale-90 animate-bounce"
           >
             <Hand className="w-6 h-6" />
-            <span>INTERAGIR [E]</span>
+            <span className="uppercase">{nearestInteractable.actionPrompt}</span>
+          </button>
+        ) : (
+          <button
+            onClick={() => setShowFullMap(true)}
+            className="h-14 px-4 rounded-2xl bg-stone-900/90 border border-amber-600/70 text-amber-200 font-serif text-xs flex items-center justify-center gap-1.5 shadow-xl active:scale-95"
+          >
+            <Compass className="w-4 h-4 text-amber-400" />
+            <span>Ver Planta</span>
           </button>
         )}
       </div>
 
-      {/* Controls Legend (Bottom Right) */}
-      <div className="absolute bottom-3 right-3 z-20 hidden md:flex items-center gap-2 bg-stone-900/90 backdrop-blur px-3 py-1.5 rounded-lg border border-amber-600/50 text-[11px] font-serif text-stone-200 shadow-xl">
+      {/* Desktop Controls Legend (Hidden on Mobile) */}
+      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 hidden lg:flex items-center gap-2 bg-stone-900/90 backdrop-blur px-3 py-1.5 rounded-lg border border-amber-600/50 text-[11px] font-serif text-stone-200 shadow-xl pointer-events-none">
         <span><kbd className="bg-stone-800 px-1.5 py-0.5 rounded text-amber-300">W,A,S,D</kbd> Mover</span>
         <span>•</span>
         <span><kbd className="bg-stone-800 px-1.5 py-0.5 rounded text-amber-300">SHIFT</kbd> Furtividade</span>
         <span>•</span>
         <span><kbd className="bg-stone-800 px-1.5 py-0.5 rounded text-amber-300">E / Espaço</kbd> Interagir</span>
-        <span>•</span>
-        <span><kbd className="bg-stone-800 px-1.5 py-0.5 rounded text-amber-300">M</kbd> Planta</span>
       </div>
 
-      {/* DIALOGUE MODAL OVERLAY */}
+      {/* DIALOGUE MODAL OVERLAY (Mobile-Optimized Touch Bottom Sheet) */}
       {activeDialogue && (
-        <div className="absolute bottom-4 left-4 right-4 z-50 bg-stone-900/98 border-2 border-amber-500 rounded-2xl p-5 shadow-2xl backdrop-blur-md animate-fade-in space-y-3">
+        <div className="absolute inset-x-2 bottom-2 z-50 bg-stone-900/98 border-2 border-amber-500 rounded-2xl p-4 shadow-2xl backdrop-blur-md animate-fade-in space-y-3 max-h-[75vh] overflow-y-auto">
           
           <div className="flex items-center justify-between border-b border-amber-900/60 pb-2">
             <div className="flex items-center gap-2.5">
               <div
-                className="w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs shadow-md border-2 border-amber-400"
+                className="w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs shadow-md border-2 border-amber-400 flex-shrink-0"
                 style={{ backgroundColor: activeDialogue.speakerColor, color: '#0c0a09' }}
               >
                 {activeDialogue.speaker[0]}
@@ -1214,13 +1177,13 @@ export const ThirdPersonCanvas: React.FC<ThirdPersonCanvasProps> = ({
 
             <button
               onClick={() => setActiveDialogue(null)}
-              className="text-stone-400 hover:text-stone-200 p-1"
+              className="text-stone-400 hover:text-stone-200 p-1.5"
             >
               <X className="w-5 h-5" />
             </button>
           </div>
 
-          <p className="font-serif text-base text-stone-100 leading-relaxed italic bg-stone-950 p-3.5 rounded-lg border border-stone-800">
+          <p className="font-serif text-sm md:text-base text-stone-100 leading-relaxed italic bg-stone-950 p-3 rounded-xl border border-stone-800">
             "{activeDialogue.text}"
           </p>
 
@@ -1229,9 +1192,9 @@ export const ThirdPersonCanvas: React.FC<ThirdPersonCanvasProps> = ({
               <button
                 key={idx}
                 onClick={() => handleSelectDialogueOption(opt)}
-                className="w-full text-left p-3 rounded-xl bg-stone-950 hover:bg-amber-950 border border-stone-800 hover:border-amber-400 text-amber-100 text-xs font-serif transition flex flex-col gap-0.5 group shadow"
+                className="w-full text-left p-3 rounded-xl bg-stone-950 hover:bg-amber-950 active:bg-amber-800 border border-stone-800 hover:border-amber-400 text-amber-100 text-xs font-serif transition flex flex-col gap-0.5 shadow active:scale-98"
               >
-                <span className="font-bold text-amber-300 group-hover:text-amber-200">
+                <span className="font-bold text-amber-300">
                   {opt.label}
                 </span>
                 {opt.description && (
@@ -1246,45 +1209,45 @@ export const ThirdPersonCanvas: React.FC<ThirdPersonCanvasProps> = ({
         </div>
       )}
 
-      {/* FULL MAP MODAL OVERLAY */}
+      {/* FULL MAP MODAL OVERLAY (Mobile-Optimized) */}
       {showFullMap && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stonebg-950/80 backdrop-blur-sm animate-fade-in">
-          <div className="bg-stonebg-900 border-2 border-amber-500 rounded-2xl max-w-2xl w-full p-6 shadow-2xl space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-stonebg-950/90 backdrop-blur-sm animate-fade-in">
+          <div className="bg-stonebg-900 border-2 border-amber-500 rounded-2xl max-w-2xl w-full p-4 md:p-6 shadow-2xl space-y-3 max-h-[92vh] overflow-y-auto">
             
             <div className="flex items-center justify-between border-b border-amber-900 pb-2">
               <div className="flex items-center gap-2">
                 <Compass className="w-5 h-5 text-amber-400" />
-                <h3 className="font-serif font-bold text-lg text-amber-200">
-                  Planta Arquitetônica: {worldData.name}
+                <h3 className="font-serif font-bold text-base md:text-lg text-amber-200">
+                  Planta: {worldData.name}
                 </h3>
               </div>
               <button
                 onClick={() => setShowFullMap(false)}
-                className="text-stone-400 hover:text-amber-200 p-1"
+                className="text-stone-400 hover:text-amber-200 p-1.5"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="relative w-full h-80 bg-stone-950 rounded-xl border border-stone-800 p-4 overflow-hidden">
-              <div className="absolute inset-4 border-2 border-stone-700 rounded-lg">
+            <div className="relative w-full h-64 md:h-80 bg-stone-950 rounded-xl border border-stone-800 p-3 overflow-hidden">
+              <div className="absolute inset-3 border-2 border-stone-700 rounded-lg">
                 
-                {/* Upper Balcony / Sanhedrin Loggia */}
-                <div className="absolute top-2 left-1/4 right-1/4 h-12 bg-stone-800 border-2 border-amber-500/80 flex items-center justify-center text-[10px] font-serif text-amber-300 font-bold">
-                  Galeria Superior: Jesus Cristo (Nimbo Cruciforme)
+                {/* Upper Balcony */}
+                <div className="absolute top-2 left-1/4 right-1/4 h-10 bg-stone-800 border-2 border-amber-500/80 flex items-center justify-center text-[9px] font-serif text-amber-300 font-bold text-center px-1">
+                  Jesus Cristo (Nimbo Cruciforme)
                 </div>
 
-                {/* Central Charcoal Brazier */}
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-14 h-14 rounded-full bg-amber-950 border-2 border-orange-500 flex items-center justify-center text-[9px] font-serif text-orange-200 text-center font-bold shadow-lg">
-                  Braseiro Central
+                {/* Central Brazier */}
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-amber-950 border-2 border-orange-500 flex items-center justify-center text-[8px] font-serif text-orange-200 text-center font-bold shadow-lg">
+                  Fogo
                 </div>
 
                 {/* Lower Entry Gate */}
-                <div className="absolute bottom-0 left-1/3 right-1/3 h-7 bg-amber-950 border-t-2 border-dashed border-amber-400 flex items-center justify-center text-[10px] font-serif text-amber-200 font-bold">
-                  Portão do Pátio (Fuga ao Sepulcro)
+                <div className="absolute bottom-0 left-1/3 right-1/3 h-6 bg-amber-950 border-t-2 border-dashed border-amber-400 flex items-center justify-center text-[9px] font-serif text-amber-200 font-bold">
+                  Portão
                 </div>
 
-                {/* Real-time Player Position Indicator */}
+                {/* Player Indicator */}
                 <div
                   className="absolute w-4 h-4 rounded-full bg-cyan-400 border-2 border-white -translate-x-1/2 -translate-y-1/2 flex items-center justify-center shadow-lg"
                   style={{
@@ -1299,37 +1262,37 @@ export const ThirdPersonCanvas: React.FC<ThirdPersonCanvasProps> = ({
                 {npcs.map((n) => (
                   <div
                     key={n.id}
-                    className="absolute -translate-x-1/2 -translate-y-1/2 text-[9px] font-serif flex flex-col items-center"
+                    className="absolute -translate-x-1/2 -translate-y-1/2 text-[8px] font-serif flex flex-col items-center"
                     style={{
                       left: `${(n.x / worldData.width) * 100}%`,
                       top: `${(n.y / worldData.height) * 100}%`,
                     }}
                   >
                     <span className={`w-2.5 h-2.5 rounded-full ${n.role.includes('Guarda') ? 'bg-red-500' : 'bg-yellow-400'}`}></span>
-                    <span className="text-stone-300 text-[8px] whitespace-nowrap">{n.name}</span>
+                    <span className="text-stone-300 text-[8px] whitespace-nowrap hidden sm:inline">{n.name}</span>
                   </div>
                 ))}
 
               </div>
             </div>
 
-            <div className="flex items-center justify-between text-xs text-stone-300 pt-2">
-              <div className="flex items-center gap-4">
-                <span className="flex items-center gap-1.5 text-cyan-300">
-                  <span className="w-2.5 h-2.5 rounded-full bg-cyan-400"></span> Sua Posição (Pedro)
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-stone-300 pt-1">
+              <div className="flex items-center gap-3 text-[11px]">
+                <span className="flex items-center gap-1 text-cyan-300">
+                  <span className="w-2 h-2 rounded-full bg-cyan-400"></span> Você (Pedro)
                 </span>
-                <span className="flex items-center gap-1.5 text-yellow-300">
-                  <span className="w-2.5 h-2.5 rounded-full bg-yellow-400"></span> Testemunhas
+                <span className="flex items-center gap-1 text-yellow-300">
+                  <span className="w-2 h-2 rounded-full bg-yellow-400"></span> Pessoas
                 </span>
-                <span className="flex items-center gap-1.5 text-red-400">
-                  <span className="w-2.5 h-2.5 rounded-full bg-red-500"></span> Guardas do Templo
+                <span className="flex items-center gap-1 text-red-400">
+                  <span className="w-2 h-2 rounded-full bg-red-500"></span> Guardas
                 </span>
               </div>
               <button
                 onClick={() => setShowFullMap(false)}
-                className="bg-amber-700 hover:bg-amber-600 text-amber-100 font-serif px-4 py-1.5 rounded-lg border border-amber-500 transition"
+                className="w-full sm:w-auto bg-amber-700 hover:bg-amber-600 text-amber-100 font-serif py-2 px-5 rounded-lg border border-amber-500 transition text-center"
               >
-                Voltar à Exploração
+                Voltar ao Jogo
               </button>
             </div>
 

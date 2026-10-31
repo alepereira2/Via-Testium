@@ -71,7 +71,7 @@ export const DomusEcclesiaeView: React.FC = () => {
   };
 
   return (
-    <div className="max-w-5xl mx-auto p-4 md:p-6 space-y-6">
+    <div className="max-w-5xl mx-auto p-2 sm:p-4 md:p-6 space-y-4 md:space-y-6">
       
       {/* Header */}
       <div className="bg-gradient-to-r from-stone-900 via-stone-950 to-amber-950/40 border border-amber-900/40 rounded-xl p-6 shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">

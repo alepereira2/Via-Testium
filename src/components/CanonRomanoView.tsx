@@ -48,7 +48,7 @@ export const CanonRomanoView: React.FC = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto p-4 md:p-6 space-y-8">
+    <div className="max-w-7xl mx-auto p-2 sm:p-4 md:p-6 space-y-6 md:space-y-8">
       
       {/* Altar Banner Header */}
       <div className="text-center relative py-8 px-4 bg-gradient-to-b from-stone-900 via-amber-950/50 to-stone-950 border border-amber-500/40 rounded-2xl shadow-2xl overflow-hidden">
@@ -217,8 +217,8 @@ export const CanonRomanoView: React.FC = () => {
 
       {/* SAINT DETAIL MODAL */}
       {selectedSaint && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stonebg-950/80 backdrop-blur-sm animate-fade-in">
-          <div className="bg-stonebg-900 border-2 border-amber-500/80 rounded-2xl max-w-xl w-full p-6 shadow-2xl relative space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-stonebg-950/90 backdrop-blur-sm animate-fade-in">
+          <div className="bg-stonebg-900 border-2 border-amber-500/80 rounded-2xl max-w-xl w-full p-4 sm:p-6 shadow-2xl relative space-y-4 max-h-[92vh] overflow-y-auto">
             
             {/* Close Button */}
             <button

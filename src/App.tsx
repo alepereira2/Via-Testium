@@ -15,7 +15,7 @@ export const AppContent: React.FC = () => {
     <div className="min-h-screen bg-stonebg-950 flex flex-col font-body selection:bg-amber-900 selection:text-amber-100">
       <Header />
 
-      <main className="flex-1 pb-16">
+      <main className="flex-1 pb-24 lg:pb-16 px-2 sm:px-4">
         {currentView === 'map' && <CampaignMap />}
         {currentView === 'canon' && <CanonRomanoView />}
         {currentView === 'phase1' && <PhaseOneGameplay />}
