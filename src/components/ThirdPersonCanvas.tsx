@@ -693,39 +693,9 @@ export const ThirdPersonCanvas: React.FC<ThirdPersonCanvasProps> = ({
 
     const legOffset = isMoving ? Math.sin(walkCycle) * 8 : 0;
 
-    // Halos
-    if (iconography === 'peter' || iconography === 'paul') {
-      const haloGrad = ctx.createRadialGradient(x, y - 24, 10, x, y - 24, 30);
-      haloGrad.addColorStop(0, '#fef08a');
-      haloGrad.addColorStop(0.7, '#eab308');
-      haloGrad.addColorStop(1, 'rgba(202, 138, 4, 0)');
-      ctx.fillStyle = haloGrad;
-      ctx.beginPath();
-      ctx.arc(x, y - 24, 30, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.strokeStyle = '#facc15';
-      ctx.lineWidth = 2;
-      ctx.stroke();
-    } else if (iconography === 'christ') {
-      const cHaloGrad = ctx.createRadialGradient(x, y - 24, 10, x, y - 24, 34);
-      cHaloGrad.addColorStop(0, '#ffffff');
-      cHaloGrad.addColorStop(0.6, '#facc15');
-      cHaloGrad.addColorStop(1, 'rgba(202, 138, 4, 0)');
-      ctx.fillStyle = cHaloGrad;
-      ctx.beginPath();
-      ctx.arc(x, y - 24, 34, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.fillStyle = '#dc2626';
-      ctx.fillRect(x - 3.5, y - 56, 7, 32);
-      ctx.fillRect(x - 20, y - 27.5, 40, 7);
-
-      ctx.strokeStyle = '#fef08a';
-      ctx.lineWidth = 2.5;
-      ctx.beginPath();
-      ctx.arc(x, y - 24, 32, 0, Math.PI * 2);
-      ctx.stroke();
-    }
+    // Sem auréola durante a peregrinação terrena!
+    // Conforme a narrativa e teologia histórica, os apóstolos e discípulos ainda são homens em combate
+    // na terra. A auréola da santidade (glória) pertence exclusivamente ao retábulo sagrado do CANON ROMANO após o martírio.
 
     // Sandals
     ctx.fillStyle = '#451a03';
@@ -1234,7 +1204,7 @@ export const ThirdPersonCanvas: React.FC<ThirdPersonCanvasProps> = ({
                 
                 {/* Upper Balcony */}
                 <div className="absolute top-2 left-1/4 right-1/4 h-10 bg-stone-800 border-2 border-amber-500/80 flex items-center justify-center text-[9px] font-serif text-amber-300 font-bold text-center px-1">
-                  Jesus Cristo (Nimbo Cruciforme)
+                  Jesus Cristo perante o Conselho
                 </div>
 
                 {/* Central Brazier */}

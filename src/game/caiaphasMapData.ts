@@ -274,7 +274,7 @@ export const CAIAPHAS_COURTYARD_MAP: MapWorldData = {
     {
       id: 'christ_suffering',
       name: 'Jesus Cristo',
-      role: 'O Messias Preso e Ferido (Nimbo Cruciforme)',
+      role: 'O Messias Preso e Ferido',
       x: 690,
       y: 70,
       radius: 22,
@@ -282,9 +282,9 @@ export const CAIAPHAS_COURTYARD_MAP: MapWorldData = {
       color: '#fde8cd',
       robeColor: '#ffffff', // Seamless holy white tunic
       cloakColor: '#7f1d1d', // Sacred crimson mantle
-      iconographyType: 'christ', // Cruciform Golden Halo + parted chestnut hair & beard
-      hasHalo: true,
-      hasCruciformHalo: true,
+      iconographyType: 'christ',
+      hasHalo: false,
+      hasCruciformHalo: false,
       hasBeard: true,
       speed: 0,
       interactionRadius: 95,

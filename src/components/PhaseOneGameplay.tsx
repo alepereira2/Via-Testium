@@ -57,13 +57,13 @@ export const PhaseOneGameplay: React.FC = () => {
         <div>
           <div className="flex items-center gap-2 text-amber-500 font-serif text-xs uppercase tracking-widest font-semibold">
             <Gamepad2 className="w-4 h-4 text-amber-400" />
-            <span>Fase 1 • Exploração em Terceira Pessoa (Iconografia Sagrada)</span>
+            <span>Fase 1 • Exploração em Terceira Pessoa (Fidelidade Histórica)</span>
           </div>
           <h2 className="text-xl md:text-2xl font-serif font-bold text-amber-100">
             Pedro: O Mestre e a Queda
           </h2>
           <p className="text-xs text-stone-300 font-serif italic mt-0.5">
-            Mova São Pedro (nimbo sagrado, túnica azul e chaves ao cinto) com WASD ou Setas. Aqueça as mãos no braseiro [E].
+            Mova Pedro (o pescador da Galileia em sua provação na terra) com WASD ou Setas. Aqueça as mãos no braseiro [E].
           </p>
         </div>
 
@@ -119,7 +119,7 @@ export const PhaseOneGameplay: React.FC = () => {
                   2. Enfrentar o servo de Caifás com a orelha enfaixada (Parente de Malco).
                 </span>
                 <span className={roosterCrowed ? 'text-emerald-400 font-bold' : 'text-stone-300'}>
-                  3. Testemunhar o canto do galo no muro e o olhar de Cristo (com nimbo cruciforme).
+                  3. Testemunhar o canto do galo no muro e o olhar silencioso de Cristo.
                 </span>
                 <span className="text-amber-400 font-semibold">
                   4. Fugir pelo portão inferior para o sepulcro vazio.
