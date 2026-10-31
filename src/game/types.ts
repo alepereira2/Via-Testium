@@ -14,6 +14,18 @@ export interface RectCollider {
 
 export type FacingDirection = 'up' | 'down' | 'left' | 'right';
 
+export type CharacterIconographyType = 
+  | 'peter' 
+  | 'christ' 
+  | 'paul' 
+  | 'malchus_kin' 
+  | 'servant_girl' 
+  | 'temple_guard' 
+  | 'roman_soldier' 
+  | 'ananias' 
+  | 'rooster' 
+  | 'generic';
+
 export interface CharacterEntity {
   id: string;
   name: string;
@@ -25,6 +37,9 @@ export interface CharacterEntity {
   color: string;
   robeColor: string;
   cloakColor?: string;
+  iconographyType: CharacterIconographyType;
+  hasHalo?: boolean;
+  hasCruciformHalo?: boolean;
   hasBeard?: boolean;
   hasTorch?: boolean;
   hasSpear?: boolean;
@@ -74,7 +89,8 @@ export interface MapWorldData {
   name: string;
   region: string;
   year: string;
-  ambientLight: string; // e.g. '#070b14' for night, '#fff4d6' for midday
+  ambientLight: string; // Base ambient overlay
+  brightnessFactor?: number;
   width: number;
   height: number;
   spawnPoint: Vector2D;

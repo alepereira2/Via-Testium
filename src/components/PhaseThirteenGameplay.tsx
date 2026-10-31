@@ -8,9 +8,6 @@ import {
   Sun, 
   CheckCircle2, 
   Gamepad2, 
-  EyeOff, 
-  ArrowRight, 
-  MapPin,
   ListTodo
 } from 'lucide-react';
 
@@ -31,7 +28,6 @@ export const PhaseThirteenGameplay: React.FC = () => {
   };
 
   const handleDenialEvent = (eventNum: number) => {
-    // Used in Damascus for Shekinah and Ananias triggers
     if (eventNum === 1) {
       soundEngine.playShekinahGlory();
       setShekinahTriggered(true);
@@ -51,13 +47,13 @@ export const PhaseThirteenGameplay: React.FC = () => {
         <div>
           <div className="flex items-center gap-2 text-purple-400 font-serif text-xs uppercase tracking-widest font-semibold">
             <Gamepad2 className="w-4 h-4 text-purple-400" />
-            <span>Fase 13 • Exploração em Terceira Pessoa</span>
+            <span>Fase 13 • Exploração em Terceira Pessoa (Iconografia de São Paulo)</span>
           </div>
           <h2 className="text-xl md:text-2xl font-serif font-bold text-stone-100">
             Paulo: O Prisioneiro de Cristo
           </h2>
           <p className="text-xs text-stone-300 font-serif italic mt-0.5">
-            Mova Saulo pela estrada em direção a Damasco. Encontre a Luz da Shekinah e siga à Rua Direita.
+            Mova Saulo (calvície frontal e barba pontiaguda de apóstolo) pela estrada em direção a Damasco. Encontre a Luz e siga à Rua Direita.
           </p>
         </div>
 
@@ -84,11 +80,12 @@ export const PhaseThirteenGameplay: React.FC = () => {
         <div className="space-y-4">
           <ThirdPersonCanvas
             worldData={DAMASCUS_ROAD_MAP}
-            playerName="Saulo"
-            playerRole="Fariseu de Tarso"
-            playerColor="#d4a373"
+            playerName="Saulo de Tarso"
+            playerRole="Fariseu & Doutor da Lei"
+            playerColor="#f0c8a0"
             playerRobeColor="#334155"
             playerCloakColor="#1e293b"
+            playerIconography="paul"
             hasBeard={true}
             tensionBpm={tensionBpm}
             setTensionBpm={setTensionBpm}
@@ -145,7 +142,7 @@ export const PhaseThirteenGameplay: React.FC = () => {
               O Vaso Escolhido das Nações
             </h3>
             <p className="text-stone-300 text-sm leading-relaxed">
-              Saulo recebeu o batismo e tornou-se <strong>Paulo de Tarso</strong>. Aquele que respirava ameaças e morte agora vive exclusivamente para o Cristo: <em>"Combati o bom combate, terminei a corrida, guardei a fé!"</em>. Seu testemunho e o de seus discípulos agora brilham no retábulo do <strong>Canon Romano</strong>!
+              Saulo recebeu o batismo e tornou-se <strong>São Paulo de Tarso</strong>. Aquele que respirava ameaças e morte agora vive exclusivamente para o Cristo: <em>"Combati o bom combate, terminei a corrida, guardei a fé!"</em>. Seu testemunho e o de seus discípulos agora brilham no retábulo do <strong>Canon Romano</strong>!
             </p>
           </div>
 

@@ -57,13 +57,13 @@ export const PhaseOneGameplay: React.FC = () => {
         <div>
           <div className="flex items-center gap-2 text-amber-500 font-serif text-xs uppercase tracking-widest font-semibold">
             <Gamepad2 className="w-4 h-4 text-amber-400" />
-            <span>Fase 1 • Exploração em Terceira Pessoa</span>
+            <span>Fase 1 • Exploração em Terceira Pessoa (Iconografia Sagrada)</span>
           </div>
           <h2 className="text-xl md:text-2xl font-serif font-bold text-amber-100">
             Pedro: O Mestre e a Queda
           </h2>
           <p className="text-xs text-stone-300 font-serif italic mt-0.5">
-            Mova Pedro pelo pátio com WASD ou Setas. Aqueça as mãos no braseiro [E] e enfrente as interrogações.
+            Mova São Pedro (nimbo sagrado, túnica azul e chaves ao cinto) com WASD ou Setas. Aqueça as mãos no braseiro [E].
           </p>
         </div>
 
@@ -93,11 +93,12 @@ export const PhaseOneGameplay: React.FC = () => {
         <div className="space-y-4">
           <ThirdPersonCanvas
             worldData={CAIAPHAS_COURTYARD_MAP}
-            playerName="Pedro"
-            playerRole="Pescador da Galileia"
-            playerColor="#d4a373"
-            playerRobeColor="#451a03"
-            playerCloakColor="#78350f"
+            playerName="São Pedro"
+            playerRole="Príncipe dos Apóstolos"
+            playerColor="#f0c8a0"
+            playerRobeColor="#1e3a8a" // Cobalt blue tunic
+            playerCloakColor="#ca8a04" // Golden yellow mantle
+            playerIconography="peter"
             hasBeard={true}
             tensionBpm={tensionBpm}
             setTensionBpm={setTensionBpm}
@@ -109,16 +110,16 @@ export const PhaseOneGameplay: React.FC = () => {
           {/* Quick Objective Instructions Box */}
           <div className="bg-stonebg-900 border border-stone-800 rounded-xl p-4 flex flex-col md:flex-row items-center justify-between gap-4 text-xs">
             <div className="space-y-1 text-stone-300">
-              <strong className="text-amber-300 block font-serif">Objetivos Ativos na Terceira Pessoa:</strong>
+              <strong className="text-amber-300 block font-serif">Objetivos do Pátio de Caifás:</strong>
               <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-stone-400">
                 <span className={denialsCount >= 1 ? 'text-emerald-400 line-through' : 'text-stone-300'}>
-                  1. Aproximar-se do braseiro e responder à Criada do Portão.
+                  1. Aproximar-se do braseiro de carvão e responder à Criada do Portão.
                 </span>
                 <span className={denialsCount >= 2 ? 'text-emerald-400 line-through' : 'text-stone-300'}>
-                  2. Conter as suspeitas do Parente de Malco perto das colunas.
+                  2. Enfrentar o servo de Caifás com a orelha enfaixada (Parente de Malco).
                 </span>
                 <span className={roosterCrowed ? 'text-emerald-400 font-bold' : 'text-stone-300'}>
-                  3. Testemunhar o canto do galo e o olhar de Cristo na galeria.
+                  3. Testemunhar o canto do galo no muro e o olhar de Cristo (com nimbo cruciforme).
                 </span>
                 <span className="text-amber-400 font-semibold">
                   4. Fugir pelo portão inferior para o sepulcro vazio.
@@ -126,7 +127,6 @@ export const PhaseOneGameplay: React.FC = () => {
               </div>
             </div>
 
-            {/* Manual Skip/Advance button if needed */}
             {roosterCrowed && (
               <button
                 onClick={handleEscapeEvent}

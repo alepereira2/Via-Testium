@@ -5,7 +5,9 @@ export const CAIAPHAS_COURTYARD_MAP: MapWorldData = {
   name: 'Pátio da Mansão de Caifás',
   region: 'Cidade Alta, Jerusalém',
   year: 'Nisan de 33 d.C. (Madrugada)',
-  ambientLight: 'rgba(5, 8, 16, 0.88)', // Cold deep blue night
+  // Brightened atmospheric night: cool moonlit stone with warm torchlight, not pitch black!
+  ambientLight: 'rgba(15, 22, 38, 0.42)',
+  brightnessFactor: 1.0,
   width: 1400,
   height: 950,
   spawnPoint: { x: 220, y: 780 }, // Near lower entry arch
@@ -13,43 +15,42 @@ export const CAIAPHAS_COURTYARD_MAP: MapWorldData = {
 
   // Solid Walls and Barriers
   walls: [
-    // Outer perimeter walls (thick limestone)
-    { x: 50, y: 50, width: 1300, height: 30 }, // North wall
-    { x: 50, y: 50, width: 30, height: 850 }, // West wall
-    { x: 1320, y: 50, width: 30, height: 850 }, // East wall
-    { x: 50, y: 870, width: 500, height: 30 }, // South wall (left of gate)
-    { x: 650, y: 870, width: 700, height: 30 }, // South wall (right of gate)
+    // Outer perimeter walls (dressed Jerusalem limestone)
+    { x: 50, y: 50, width: 1300, height: 35 }, // North wall
+    { x: 50, y: 50, width: 35, height: 850 }, // West wall
+    { x: 1315, y: 50, width: 35, height: 850 }, // East wall
+    { x: 50, y: 865, width: 500, height: 35 }, // South wall (left of gate)
+    { x: 650, y: 865, width: 700, height: 35 }, // South wall (right of gate)
 
     // Upper Balcony / Loggia (Where Jesus is kept before the Sanhedrin)
-    { x: 450, y: 80, width: 500, height: 40 }, // Balcony railing
-    { x: 450, y: 80, width: 25, height: 120 }, // West stairs divider
-    { x: 925, y: 80, width: 25, height: 120 }, // East stairs divider
+    { x: 450, y: 80, width: 500, height: 45 }, // Balcony railing
+    { x: 450, y: 80, width: 30, height: 120 }, // West stairs divider
+    { x: 920, y: 80, width: 30, height: 120 }, // East stairs divider
 
-    // Colonnade barriers
-    { x: 250, y: 320, width: 30, height: 30 },
-    { x: 450, y: 320, width: 30, height: 30 },
-    { x: 850, y: 320, width: 30, height: 30 },
-    { x: 1050, y: 320, width: 30, height: 30 },
+    // Colonnade pillars (Classical Corinthian/Herodian pillars)
+    { x: 250, y: 320, width: 36, height: 36 },
+    { x: 450, y: 320, width: 36, height: 36 },
+    { x: 850, y: 320, width: 36, height: 36 },
+    { x: 1050, y: 320, width: 36, height: 36 },
 
-    { x: 250, y: 620, width: 30, height: 30 },
-    { x: 450, y: 620, width: 30, height: 30 },
-    { x: 850, y: 620, width: 30, height: 30 },
-    { x: 1050, y: 620, width: 30, height: 30 },
+    { x: 250, y: 620, width: 36, height: 36 },
+    { x: 450, y: 620, width: 36, height: 36 },
+    { x: 850, y: 620, width: 36, height: 36 },
+    { x: 1050, y: 620, width: 36, height: 36 },
   ],
 
-  // Visual Props with Light Radii and Collision
   props: [
-    // The central charcoal brazier (warming fire)
+    // The central charcoal brazier (warming fire with rich radiant glow)
     {
       id: 'brazier_central',
       type: 'brazier',
       x: 650,
       y: 480,
-      width: 44,
-      height: 44,
+      width: 52,
+      height: 52,
       solid: true,
-      lightRadius: 240,
-      lightColor: '#ff7722',
+      lightRadius: 320,
+      lightColor: '#ff8822',
       interactive: true,
       interactPrompt: 'Aquecer as mãos no braseiro [E]',
     },
@@ -58,50 +59,50 @@ export const CAIAPHAS_COURTYARD_MAP: MapWorldData = {
     {
       id: 'torch_west',
       type: 'brazier',
-      x: 90,
+      x: 95,
       y: 450,
-      width: 20,
-      height: 20,
+      width: 24,
+      height: 24,
       solid: false,
-      lightRadius: 130,
-      lightColor: '#ff9933',
+      lightRadius: 200,
+      lightColor: '#ffaa33',
     },
 
     // Torch on east wall
     {
       id: 'torch_east',
       type: 'brazier',
-      x: 1280,
+      x: 1275,
       y: 450,
-      width: 20,
-      height: 20,
+      width: 24,
+      height: 24,
       solid: false,
-      lightRadius: 130,
-      lightColor: '#ff9933',
+      lightRadius: 200,
+      lightColor: '#ffaa33',
     },
 
-    // Torches on upper balcony
+    // Torches on upper balcony (illuminating Christ)
     {
       id: 'torch_balcony_1',
       type: 'brazier',
       x: 480,
       y: 110,
-      width: 20,
-      height: 20,
+      width: 24,
+      height: 24,
       solid: false,
-      lightRadius: 150,
-      lightColor: '#ffaa33',
+      lightRadius: 220,
+      lightColor: '#ffd700',
     },
     {
       id: 'torch_balcony_2',
       type: 'brazier',
       x: 880,
       y: 110,
-      width: 20,
-      height: 20,
+      width: 24,
+      height: 24,
       solid: false,
-      lightRadius: 150,
-      lightColor: '#ffaa33',
+      lightRadius: 220,
+      lightColor: '#ffd700',
     },
 
     // Stone benches
@@ -110,8 +111,8 @@ export const CAIAPHAS_COURTYARD_MAP: MapWorldData = {
       type: 'bench',
       x: 140,
       y: 280,
-      width: 80,
-      height: 30,
+      width: 85,
+      height: 32,
       solid: true,
     },
     {
@@ -119,28 +120,28 @@ export const CAIAPHAS_COURTYARD_MAP: MapWorldData = {
       type: 'bench',
       x: 1160,
       y: 280,
-      width: 80,
-      height: 30,
+      width: 85,
+      height: 32,
       solid: true,
     },
     {
       id: 'bench_3',
       type: 'bench',
-      x: 750,
+      x: 760,
       y: 530,
-      width: 90,
-      height: 26,
+      width: 95,
+      height: 28,
       solid: true,
     },
 
-    // Wine amphorae and jars
+    // Wine amphorae and oil jars
     {
       id: 'amphora_1',
       type: 'amphora',
-      x: 800,
+      x: 810,
       y: 510,
-      width: 24,
-      height: 24,
+      width: 26,
+      height: 26,
       solid: true,
     },
 
@@ -154,10 +155,10 @@ export const CAIAPHAS_COURTYARD_MAP: MapWorldData = {
       height: 40,
       solid: false,
       interactive: true,
-      interactPrompt: 'Portão do Pátio (Saída para a Cidade)',
+      interactPrompt: 'Portão do Pátio (Saída para a Cidade) [E]',
     },
 
-    // Upper Loggia Platform
+    // Upper Loggia Platform Stairs
     {
       id: 'loggia_stairs',
       type: 'stairs',
@@ -169,49 +170,52 @@ export const CAIAPHAS_COURTYARD_MAP: MapWorldData = {
     }
   ],
 
-  // NPCs in the Courtyard
+  // NPCs with authentic Catholic Iconography
   npcs: [
     // 1. The Servant Girl who keeps the door
     {
       id: 'servant_girl',
       name: 'Criada do Portão',
-      role: 'Serva do Sumo Sacerdote',
+      role: 'Serva de Caifás',
       x: 480,
       y: 540,
-      radius: 16,
+      radius: 20,
       facing: 'right',
-      color: '#d4a373',
-      robeColor: '#9c6644',
-      cloakColor: '#ddb892',
+      color: '#f0c8a0',
+      robeColor: '#b45309', // Terracotta ochre Levantine gown
+      cloakColor: '#fef3c7', // Flowing white modesty veil
+      iconographyType: 'servant_girl',
       speed: 1.2,
-      interactionRadius: 65,
-      detectionRadius: 90,
+      interactionRadius: 75,
+      detectionRadius: 95,
       dialogueId: 'criada_dialogue_1',
       barkText: '...essa noite está fria demais...',
       isPatrolling: true,
       patrolPoints: [
         { x: 480, y: 540 },
-        { x: 540, y: 500 },
+        { x: 550, y: 490 },
         { x: 460, y: 600 }
       ],
       currentPatrolIndex: 0
     },
 
-    // 2. Kinsman of Malchus (Whose ear Peter cut off in Gethsemane)
+    // 2. Kinsman of Malchus (Whose ear Peter cut off in Gethsemane!)
     {
       id: 'malchus_kinsman',
       name: 'Parente de Malco',
-      role: 'Servo de Caifás',
+      role: 'Servo de Caifás (Orelha Enfaixada)',
       x: 780,
       y: 440,
-      radius: 18,
+      radius: 22,
       facing: 'left',
-      color: '#b08968',
-      robeColor: '#6f4e37',
+      color: '#e5b887',
+      robeColor: '#451a03',
+      cloakColor: '#78350f',
+      iconographyType: 'malchus_kin', // Has bandaged right ear!
       hasBeard: true,
       speed: 0,
-      interactionRadius: 70,
-      detectionRadius: 100,
+      interactionRadius: 75,
+      detectionRadius: 105,
       dialogueId: 'malco_kinsman_dialogue',
       barkText: 'Aquele golpe no olival não ficará impune...',
     },
@@ -220,25 +224,27 @@ export const CAIAPHAS_COURTYARD_MAP: MapWorldData = {
     {
       id: 'temple_guard_1',
       name: 'Soldado do Templo',
-      role: 'Guarda do Sinédrio',
+      role: 'Guarda Levítico do Sinédrio',
       x: 620,
-      y: 400,
-      radius: 18,
+      y: 390,
+      radius: 22,
       facing: 'down',
-      color: '#8d99ae',
-      robeColor: '#2b2d42',
+      color: '#e2b887',
+      robeColor: '#1e3a8a', // Levitical blue & white sash
+      cloakColor: '#ffffff', // White priestly linen turban
+      iconographyType: 'temple_guard',
       hasSpear: true,
       speed: 1.0,
-      interactionRadius: 60,
-      detectionRadius: 110,
+      interactionRadius: 70,
+      detectionRadius: 115,
       detectionAngle: 60,
       dialogueId: 'guards_dialogue',
       barkText: 'O rabi de Nazaré logo será entregue a Pilatos.',
       isPatrolling: true,
       patrolPoints: [
-        { x: 620, y: 400 },
-        { x: 740, y: 400 },
-        { x: 680, y: 350 }
+        { x: 620, y: 390 },
+        { x: 740, y: 390 },
+        { x: 680, y: 340 }
       ],
       currentPatrolIndex: 0
     },
@@ -246,67 +252,72 @@ export const CAIAPHAS_COURTYARD_MAP: MapWorldData = {
     // 4. Roman Auxiliary Soldier
     {
       id: 'roman_soldier',
-      name: 'Soldado Romano',
-      role: 'Guarda da Coorte',
+      name: 'Centurião Romano',
+      role: 'Legionário da Coorte',
       x: 950,
       y: 480,
-      radius: 18,
+      radius: 23,
       facing: 'left',
-      color: '#c1121f',
-      robeColor: '#780000',
+      color: '#d4a373',
+      robeColor: '#991b1b', // Imperial Roman Crimson
+      cloakColor: '#b91c1c',
+      iconographyType: 'roman_soldier', // Crested helmet + lorica segmentata
       hasSpear: true,
       speed: 0,
-      interactionRadius: 60,
-      detectionRadius: 80,
+      interactionRadius: 70,
+      detectionRadius: 90,
       dialogueId: 'roman_dialogue',
-      barkText: 'Bebam esse vinho e fiquem de olhos abertos.',
+      barkText: 'Bebam esse vinho e mantenham a ordem.',
     },
 
-    // 5. Jesus on the Upper Loggia
+    // 5. Our Lord Jesus Christ on the Upper Loggia
     {
       id: 'christ_suffering',
-      name: 'Jesus de Nazaré',
-      role: 'O Messias Preso e Ferido',
+      name: 'Jesus Cristo',
+      role: 'O Messias Preso e Ferido (Nimbo Cruciforme)',
       x: 690,
       y: 70,
-      radius: 16,
+      radius: 22,
       facing: 'down',
-      color: '#fdf0d5',
-      robeColor: '#ffffff',
-      cloakColor: '#e0e1dd',
+      color: '#fde8cd',
+      robeColor: '#ffffff', // Seamless holy white tunic
+      cloakColor: '#7f1d1d', // Sacred crimson mantle
+      iconographyType: 'christ', // Cruciform Golden Halo + parted chestnut hair & beard
+      hasHalo: true,
+      hasCruciformHalo: true,
       hasBeard: true,
       speed: 0,
-      interactionRadius: 90,
+      interactionRadius: 95,
       dialogueId: 'christ_glance',
-      barkText: '...Pai, perdoa-lhes...',
+      barkText: '...Pai, perdoa-lhes, pois não sabem o que fazem...',
     },
 
     // 6. The Rooster on the East Wall Rampart
     {
       id: 'rooster_prop',
       name: 'O Galo no Muro',
-      role: 'Testemunha da Madrugada',
+      role: 'O Sinal da Profecia',
       x: 1080,
       y: 75,
-      radius: 12,
+      radius: 14,
       facing: 'left',
-      color: '#d00000',
-      robeColor: '#d00000',
+      color: '#b91c1c',
+      robeColor: '#ea580c',
+      iconographyType: 'rooster',
       speed: 0,
-      interactionRadius: 60,
+      interactionRadius: 65,
       dialogueId: 'rooster_bark',
-      barkText: 'O poleiro na muralha alta do Templo...',
+      barkText: 'O canto da madrugada que desperta a alma...',
     }
   ],
 
   // Interactive Dialogue Tree
   dialogues: {
-    // 1st Confrontation: The Servant Girl
     criada_dialogue_1: {
       id: 'criada_dialogue_1',
       speaker: 'Criada do Portão',
       speakerRole: 'Serva de Caifás',
-      speakerColor: '#d4a373',
+      speakerColor: '#d97706',
       text: 'Tu também estavas com Jesus, o Nazareno! Teu rosto não me engana, homem da Galileia!',
       options: [
         {
@@ -316,8 +327,8 @@ export const CAIAPHAS_COURTYARD_MAP: MapWorldData = {
           triggerAction: 'denial_one_committed'
         },
         {
-          label: '2. "Por que me interrogas no escuro? Sou apenas um peregrino."',
-          description: 'Tenta se misturar aos viajantes',
+          label: '2. "Por que me interrogas no escuro? Sou apenas um peregrino da festa."',
+          description: 'Tenta se misturar aos forasteiros',
           nextDialogueId: 'criada_result_1',
           triggerAction: 'denial_one_committed'
         }
@@ -328,24 +339,23 @@ export const CAIAPHAS_COURTYARD_MAP: MapWorldData = {
       id: 'criada_result_1',
       speaker: 'Criada do Portão',
       speakerRole: 'Serva de Caifás',
-      speakerColor: '#d4a373',
-      text: 'Humph... teus olhos estão inquietos. Vai para junto do fogo se queres, mas não tiro os olhos de ti.',
+      speakerColor: '#d97706',
+      text: 'Humph... teus olhos estão inquietos e tens as mãos trêmulas. Vai para junto do fogo se queres, mas não tiro os olhos de ti.',
       options: [
         {
-          label: '[Afastar-se em direção ao fogo do braseiro]',
+          label: '[Afastar-se em direção às brasas do braseiro]',
           nextDialogueId: undefined,
           triggerAction: 'close_dialogue'
         }
       ]
     },
 
-    // 2nd Confrontation: Kinsman of Malchus
     malco_kinsman_dialogue: {
       id: 'malco_kinsman_dialogue',
       speaker: 'Parente de Malco',
-      speakerRole: 'Servo do Sumo Sacerdote',
-      speakerColor: '#b08968',
-      text: 'Não te vi eu com ele no horto das oliveiras?! Tu és galileu! O teu próprio modo de falar te condena diante de todos nós!',
+      speakerRole: 'Servo do Sumo Sacerdote (Orelha Enfaixada)',
+      speakerColor: '#92400e',
+      text: 'Não te vi eu com ele no horto das oliveiras?! Olha para a minha orelha golpeada! Tu és galileu! O teu próprio modo de falar te condena diante de todos nós!',
       options: [
         {
           label: '1. "Homem, eu não sou um deles! Nunca estive com ele no horto!"',
@@ -366,8 +376,8 @@ export const CAIAPHAS_COURTYARD_MAP: MapWorldData = {
       id: 'malco_result',
       speaker: 'Parente de Malco',
       speakerRole: 'Servo do Sumo Sacerdote',
-      speakerColor: '#b08968',
-      text: 'Mentes! Eu reconheço essa barba e o manto dos homens que o cercavam no Getsêmani! Soldados, venham ver!',
+      speakerColor: '#92400e',
+      text: 'Mentes! Eu reconheço esse manto azul e as barbas dos homens que cercavam o Nazareno! Soldados, venham ver quem está aqui!',
       options: [
         {
           label: '[O cerco se fecha. O coração de Pedro dispara!]',
@@ -377,12 +387,11 @@ export const CAIAPHAS_COURTYARD_MAP: MapWorldData = {
       ]
     },
 
-    // 3rd Confrontation: The Temple Guards & The Rooster Crow
     guards_dialogue: {
       id: 'guards_dialogue',
       speaker: 'Soldado do Templo',
       speakerRole: 'Guarda Armado',
-      speakerColor: '#8d99ae',
+      speakerColor: '#3b82f6',
       text: 'Verdadeiramente tu és um deles! Estavas pronto a empunhar ferro contra nós nas trevas! Confessa quem és!',
       options: [
         {
@@ -398,7 +407,7 @@ export const CAIAPHAS_COURTYARD_MAP: MapWorldData = {
       id: 'rooster_climax',
       speaker: 'A Madrugada de Jerusalém',
       speakerRole: 'O Canto do Galo',
-      speakerColor: '#e63946',
+      speakerColor: '#ef4444',
       text: '* COCORICÓ! * O galo canta no topo da muralha. No mesmo instante, na galeria superior, Jesus volta-se e olha nos olhos de Pedro...',
       options: [
         {
@@ -411,10 +420,10 @@ export const CAIAPHAS_COURTYARD_MAP: MapWorldData = {
 
     christ_look_dialogue: {
       id: 'christ_look_dialogue',
-      speaker: 'Jesus de Nazaré',
-      speakerRole: 'O Salvador Olhando de Cima',
-      speakerColor: '#ffd166',
-      text: 'O olhar de Cristo através da balaustrada não traz ira nem vingança, mas uma tristeza compassiva e infinita. Pedro lembra-se: "Antes que o galo cante hoje, três vezes me negarás".',
+      speaker: 'Jesus Cristo',
+      speakerRole: 'O Olhar Misericordioso',
+      speakerColor: '#fbbf24',
+      text: 'O olhar de Cristo através da balaustrada não traz ira nem vingança, mas uma dor infinita e misericordiosa. Pedro lembra-se: "Antes que o galo cante hoje, três vezes me negarás".',
       options: [
         {
           label: '[Chorar amargamente e correr em direção ao portão de saída]',
@@ -426,10 +435,10 @@ export const CAIAPHAS_COURTYARD_MAP: MapWorldData = {
 
     roman_dialogue: {
       id: 'roman_dialogue',
-      speaker: 'Soldado Romano',
+      speaker: 'Centurião Romano',
       speakerRole: 'Guarda da Coorte',
-      speakerColor: '#c1121f',
-      text: 'Afasta-te, judeu. O julgamento do vosso Conselho já está quase encerrado. Ao amanhecer o réu irá ao Pretório de Pilatos.',
+      speakerColor: '#dc2626',
+      text: 'Afasta-te, peregrino. O tribunal do Conselho logo emitirá a sentença. Ao raiar do dia o réu irá ao Pretório de Pôncio Pilatos.',
       options: [
         {
           label: 'Afastar-se em silêncio',
@@ -443,8 +452,8 @@ export const CAIAPHAS_COURTYARD_MAP: MapWorldData = {
       id: 'rooster_bark',
       speaker: 'O Galo no Muro',
       speakerRole: 'Sinal da Profecia',
-      speakerColor: '#e63946',
-      text: 'O galo aguarda a aurora sobre as pedras cinzentas da muralha.',
+      speakerColor: '#ef4444',
+      text: 'O galo empoleirado nas ameias do Templo aguarda a hora predita.',
       options: [
         {
           label: 'Voltar ao pátio',
@@ -456,10 +465,10 @@ export const CAIAPHAS_COURTYARD_MAP: MapWorldData = {
 
     christ_glance: {
       id: 'christ_glance',
-      speaker: 'Jesus de Nazaré',
-      speakerRole: 'O Senhor',
-      speakerColor: '#ffd166',
-      text: 'O Senhor está com as mãos atadas por cordas, silencioso e manso como um cordeiro levado ao matadouro.',
+      speaker: 'Jesus Cristo',
+      speakerRole: 'O Cordeiro de Deus',
+      speakerColor: '#fbbf24',
+      text: 'O Senhor está com as mãos atadas por cordas de cânhamo, silencioso e manso, suportando as bofetadas dos servos do Templo.',
       options: [
         {
           label: 'Baixar a cabeça em reverência e dor',
